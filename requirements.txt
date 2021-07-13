@@ -1,0 +1,6 @@
+pycarol[complete]
+python-dotenv
+python-json-logger
+sentencepiece==0.1.92
+sentence-transformers
+torch
