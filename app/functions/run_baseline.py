@@ -1,65 +1,14 @@
-from pycarol import Carol, DataModel, Staging, Apps, PwdAuth, Storage
-import os
 import logging
-from datetime import datetime, timedelta
-import gc
-import pandas as pd
-import pickle
-from sentence_transformers import LoggingHandler, util
+from sentence_transformers import util
 
 logger = logging.getLogger(__name__)
 
-def save_object_to_storage(storage, obj, filename):
-    logger.info(f'Saving {filename} to the storage.')
-
-    with open(filename, "bw") as f:
-        pickle.dump(obj, f)
-
-    storage.save(filename, obj, format='pickle')
-
-def get_file_from_storage(storage, filename):
-    return storage.load(filename, format='pickle', cache=False)
-
-
 def getEmbeddingsCache(uniq_sentences, model, cache=True):
-    login = Carol()
-    storage = Storage(login)
-    
-    # Loads the dictionary containing all sentences whose embeddings are already calculated.
-    filename = "embeddings_cache.pickle"
-    if cache:
-        logger.info('Loading cache from storage.')
-        sent2embd = get_file_from_storage(storage, filename)
-
-        if sent2embd is None:
-            logger.warn('Unable to load file from storage. Reseting cache.')
-            sent2embd = {}            
-
-    else:
-        # WARN: Full embeddings calculation demands high resources consumption.
-        # Make sure the VM instance defined on manifest.json is big enough
-        # before running on reset mode.
-        logger.warn('Reseting cache.')
-        sent2embd = {}
-    
-    # Gets the list of sentences for which embeddings are not yet calculated
-    sentences_processed = list(sent2embd.keys())
-    sentences_pending = list(np.setdiff1d(uniq_sentences,sentences_processed))
-
-    if len(sentences_pending) > 0:
-
-        logger.info(f'Calculating embeddings for {len(sentences_pending)} unprocessed sentences.')
-        embeddings_pending = model.encode(sentences_pending, convert_to_tensor=False)
-        dict_pending = dict(zip(sentences_pending, embeddings_pending))
-        
-        logger.info('Updating cache on storage.')
-        sent2embd.update(dict_pending)
-        save_object_to_storage(storage, sent2embd, filename)
-    
-    else:
-        logger.info('All sentences already present on cache, no calculation needed.')
-    
+    logger.info(f'Calculating embeddings for {len(uniq_sentences)} unprocessed sentences.')
+    embeddings_pending = model.encode(uniq_sentences, convert_to_tensor=False)
+    sent2embd = dict(zip(uniq_sentences, embeddings_pending))
     return sent2embd
+
 
 def run_baseline(model, df_train):
 

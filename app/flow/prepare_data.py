@@ -1,7 +1,6 @@
 from ..functions.prepare_data import prepare_data
 from ..flow.commons import Task
 import luigi
-import pandas as pd
 import logging
 
 logger = logging.getLogger(__name__)

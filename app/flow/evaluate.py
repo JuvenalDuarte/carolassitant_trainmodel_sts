@@ -4,7 +4,6 @@ from ..functions.evaluate import evaluate
 from .commons import Task
 import luigi
 from . import prepare_data
-from . import run_baseline
 from . import load_model
 from pycarol.pipeline import inherit_list
 import logging
