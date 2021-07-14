@@ -58,7 +58,7 @@ def prepare_data(training_table, validation_table, attr_map):
         validation_dataset = pd.DataFrame()
 
     logger.info(f'Parsing \"training_mapping\" setting.')
-    attr_map = json.load(attr_map)
+    attr_map = json.loads(attr_map)
 
     similarity_col = attr_map["similarity"]
     total_training = len(train_dataset)
