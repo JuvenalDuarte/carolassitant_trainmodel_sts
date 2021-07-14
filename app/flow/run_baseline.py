@@ -1,5 +1,5 @@
-from .prepare_data import prepare_data
-from .load_model import load_model
+from . import prepare_data
+from . import load_model
 from .commons import Task
 
 from ..functions.run_baseline import run_baseline
