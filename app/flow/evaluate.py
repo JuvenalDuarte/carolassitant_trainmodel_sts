@@ -1,10 +1,10 @@
 from app.functions.run_finetuning import run_finetuning
-from app.functions.run_baseline import run_baseline
 from ..functions.evaluate import evaluate
 from .commons import Task
 import luigi
 from . import prepare_data
 from . import load_model
+from . import run_finetuning
 from pycarol.pipeline import inherit_list
 import logging
 
