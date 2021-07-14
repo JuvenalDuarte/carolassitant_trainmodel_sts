@@ -24,8 +24,7 @@ class Evaluate(Task):
     def easy_run(self, inputs):
         bmodel = inputs[0]
         tmodel = inputs[1]
-        #train = inputs[2]
-        validation = inputs[3]
+        train, validation = inputs[2]
 
         df_val = evaluate(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
 

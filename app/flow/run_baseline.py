@@ -23,8 +23,7 @@ class RunBaseline(Task):
 
     def easy_run(self, inputs):
         model = inputs[0]
-        train = inputs[1]
-        #validation = inputs[2]
+        train, validation = inputs[1]
 
         base_df = run_baseline(model=model, df_train=train)
 
