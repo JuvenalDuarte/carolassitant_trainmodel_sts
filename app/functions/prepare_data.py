@@ -78,7 +78,7 @@ def prepare_data(training_table, validation_table, attr_map):
     validation_dataset.rename(columns=attr_map, inplace=True)
 
     logger.info(f'Filtering target columns only')
-    train_dataset = train_dataset[attr_map.keys()]
-    validation_dataset = validation_dataset[attr_map.keys()]
+    train_dataset = train_dataset[attr_map.values()] 
+    validation_dataset = validation_dataset[attr_map.values()]
 
     return train_dataset, validation_dataset
