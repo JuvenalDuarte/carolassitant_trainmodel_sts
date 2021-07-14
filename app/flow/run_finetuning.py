@@ -14,9 +14,9 @@ luigi.auto_namespace(scope=__name__)
     run_baseline.RunBaseline
 )
 class RunFineTuning(Task):
-    finetune_factor = luigi.Parameter()
-    epochs = luigi.Parameter()
-    batchsize = luigi.Parameter()
+    finetune_factor = luigi.FloatParameter()
+    epochs = luigi.IntParameter()
+    batchsize = luigi.IntParameter()
     datetime = luigi.Parameter() 
     
     def easy_run(self, inputs):

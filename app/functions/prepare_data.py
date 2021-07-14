@@ -43,10 +43,11 @@ def prepare_data(training_table, validation_table, attr_map):
     if validation_table != "":
         logger.info(f'Parsing \"validation_pairs_table\" setting.')
 
-        if len(validation_table) == 3:
-            val_env, val_conn, val_stag = validation_table
-        elif len(validation_table) == 2:
-            val_conn, val_stag = validation_table
+        validation_list = validation_table.split("/")
+        if len(validation_list) == 3:
+            val_env, val_conn, val_stag = validation_list
+        elif len(validation_list) == 2:
+            val_conn, val_stag = validation_list
         else:
             raise "Unable to parse \"validation_pairs_table\" setting. Valid options are: 1. env/connector/staging; 2. connector/staging."
 
