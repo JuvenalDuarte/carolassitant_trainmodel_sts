@@ -24,6 +24,6 @@ class RunFineTuning(Task):
         model = inputs[0]
         train_baseline = inputs[1]
 
-        tuned_model = run_finetuning(baseline_model=model, baseline_name=self.baseline, baseline=train_baseline, bump=self.finetune_factor, epchs=self.epochs, bsize=self.batchsize)
+        tuned_model = run_finetuning(baseline_model=model, baseline_name=self.baseline, baseline_df=train_baseline, bump=self.finetune_factor, epchs=self.epochs, bsize=self.batchsize)
 
         return tuned_model
