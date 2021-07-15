@@ -1,6 +1,6 @@
 import logging
 from sentence_transformers import util
-from ..functions.run_baseline import getEmbeddingsCache
+from ..functions.run_baseline import getEmbeddingsCache, calculateSimilarities
 from torch.nn import MSELoss
 
 logger = logging.getLogger(__name__)
@@ -28,11 +28,11 @@ def evaluate(baseline_model, tuned_model, df_val):
 
 
     logger.info(f'Calculating baseline similarities.')
-    similarities = util.pytorch_cos_sim(sentence1_embd_base, sentence2_embd_base)
+    similarities = calculateSimilarities(sentence1_embd_base, sentence2_embd_base)
     df_val["baseline_similarity"] = similarities
 
     logger.info(f'Calculating tuned similarities.')
-    similarities = util.pytorch_cos_sim(sentence1_embd_tuned, sentence2_embd_tuned)
+    similarities = calculateSimilarities(sentence1_embd_tuned, sentence2_embd_tuned)
     df_val["tuned_similarity"] = similarities
 
 
