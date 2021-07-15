@@ -1,8 +1,11 @@
 import logging
 from sentence_transformers import InputExample, losses
 from torch.utils.data import DataLoader
+from pycarol import Carol, Storage
+from datetime import datetime
 import random
 import math
+import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +63,19 @@ def prepare_samples(df):
 
     return pos_samples
 
+def save_object_to_storage(obj, filename):
+    login = Carol()
+    storage = Storage(login)
 
-def run_finetuning(baseline_model, baseline_df, bump, epchs = 10, bsize = 90):
+    logger.info(f'Saving {filename} to the storage.')
+
+    with open(filename, "bw") as f:
+        pickle.dump(obj, f)
+
+    storage.save(filename, obj, format='pickle')
+
+
+def run_finetuning(baseline_model, baseline_name, baseline_df, bump, epchs = 10, bsize = 90):
 
     logger.info(f'3. Running fine tuning.')
     
@@ -91,8 +105,8 @@ def run_finetuning(baseline_model, baseline_df, bump, epchs = 10, bsize = 90):
     logger.info(f'Fine tuning concluded.')
 
     #Saves the new trained model to the current dir.
-    #saveto="./LaBSE_totvs_ticketslogs_v35"
-    #logger.info(f'Saving model to {saveto}.')
-    #baseline_model.save(saveto)
+    saveto=baseline_name + "_FT" + str(datetime.now().strftime('%y%m%d%H%M%S'))
+    logger.info(f'Saving model to {saveto} on storage.')
+    save_object_to_storage(baseline_model, saveto)
     
     return baseline_model

@@ -14,6 +14,7 @@ luigi.auto_namespace(scope=__name__)
     run_baseline.RunBaseline
 )
 class RunFineTuning(Task):
+    baseline = luigi.Parameter() 
     finetune_factor = luigi.FloatParameter()
     epochs = luigi.IntParameter()
     batchsize = luigi.IntParameter()
@@ -23,6 +24,6 @@ class RunFineTuning(Task):
         model = inputs[0]
         train_baseline = inputs[1]
 
-        tuned_model = run_finetuning(baseline_model=model, baseline=train_baseline, bump=self.finetune_factor, epchs=self.epochs, bsize=self.batchsize)
+        tuned_model = run_finetuning(baseline_model=model, baseline_name=self.baseline, baseline=train_baseline, bump=self.finetune_factor, epchs=self.epochs, bsize=self.batchsize)
 
         return tuned_model
