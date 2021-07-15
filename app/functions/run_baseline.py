@@ -1,5 +1,6 @@
 import logging
 from sentence_transformers import util
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,10 @@ def calculateSimilarities(embd_vec_1, embd_vec_2):
 def run_baseline(model, df_train):
 
     logger.info(f'2. Running baseline evaluation.')
+
+    logger.info(f'GPU enabled? {torch.cuda.is_available()}.')
+    if torch.cuda.is_available():
+        logger.info(f'GPU model: {torch.cuda.get_device_name(0)}.')
 
     uniq_sentences = list(df_train["sentence1"].unique())
     uniq_sentences = uniq_sentences + list(df_train["sentence2"].unique())
