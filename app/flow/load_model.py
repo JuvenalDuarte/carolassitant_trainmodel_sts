@@ -14,8 +14,9 @@ class LoadModel(Task):
 
     def easy_run(self, inputs):
 
-        logger.info(f'GPU enabled? {torch.cuda.is_available()}.')
-        if torch.cuda.is_available():
+        gpu = torch.cuda.is_available()
+        logger.info(f'GPU enabled? {gpu}.')
+        if gpu:
             logger.info(f'GPU model: {torch.cuda.get_device_name(0)}.')
 
         logger.info(f'Loading baseline model: {self.baseline}.')

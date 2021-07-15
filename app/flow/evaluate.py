@@ -26,6 +26,9 @@ class Evaluate(Task):
         tmodel = inputs[1]
         train, validation = inputs[2]
 
-        df_val = evaluate(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
+        if validation:
+            df_val = evaluate(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
+        else:
+            df_val = None
 
         return df_val
