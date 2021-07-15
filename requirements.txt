@@ -1,7 +1,6 @@
 pycarol[complete]
 python-dotenv
 python-json-logger
-pytorch 
-cudatoolkit==10.1
+torch==1.4.0
 sentencepiece==0.1.92
 sentence-transformers

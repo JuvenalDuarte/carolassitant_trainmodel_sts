@@ -17,7 +17,8 @@
           "profile": "",
           "properties": {
             "dockerImage": "trainstsmodel/trainstsmodel:1.0.0",
-            "instanceType": "g1.v100.large"
+            "instanceType": "g1.v100.large",
+            "args": "--gpus all"
           },
           "environments": {
             "ENV": "PROD",
