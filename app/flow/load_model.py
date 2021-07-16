@@ -14,10 +14,13 @@ class LoadModel(Task):
 
     def easy_run(self, inputs):
 
-        gpu = torch.cuda.is_available()
-        logger.info(f'GPU enabled? {gpu}.')
-        if gpu:
-            logger.info(f'GPU model: {torch.cuda.get_device_name(0)}.')
+        try:
+            gpu = torch.cuda.is_available()
+            logger.info(f'GPU enabled? {gpu}.')
+            if gpu:
+                logger.info(f'GPU model: {torch.cuda.get_device_name(0)}.')
+        except Exception as e:
+            logger.error(f'Cannot verify if GPU is available: {e}.')
 
         logger.info(f'Loading baseline model: {self.baseline}.')
         model = SentenceTransformer(self.baseline)

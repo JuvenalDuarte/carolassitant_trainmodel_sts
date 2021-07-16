@@ -4,14 +4,12 @@ load_dotenv('.env', override=True)
 
 import sys
 from time import time
-
-from app.flow import commons, evaluate, load_model
+from app.flow import commons, evaluate
 
 def get_tasks():
 
     task_list = [
         evaluate.Evaluate(**commons.params)
-        #load_model.LoadModel(**commons.params)
     ]
 
     return task_list
