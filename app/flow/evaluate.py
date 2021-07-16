@@ -1,4 +1,3 @@
-from app.functions.run_finetuning import run_finetuning
 from ..functions.evaluate import evaluate
 from .commons import Task
 import luigi

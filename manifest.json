@@ -2,21 +2,21 @@
   "batch": {
     "processes": [
       {
-        "name": "trainstsmodel",
+        "name": "trainnlpstsmodel",
         "algorithmName": "main",
         "namespace": "",
         "algorithmTitle": {
-          "pt-br": "Train STS Model",
-          "en-US": "Train STS Model"
+          "pt-br": "Train NLP STS Model",
+          "en-US": "Train NLP STS Model"
         },
         "algorithmDescription": {
-          "pt-br": "Train STS Model",
-          "en-US": "Train STS Model"
+          "pt-br": "Train NLP STS Model",
+          "en-US": "Train NLP STS Model"
         },
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "trainstsmodel/trainstsmodel:1.0.0",
+            "dockerImage": "trainstsmodel/trainnlpstsmodel:1.0.0",
             "instanceType": "g1.v100.large"
           },
           "environments": {
@@ -29,7 +29,7 @@
   },
   "docker": [
     {
-      "dockerName": "trainstsmodel",
+      "dockerName": "trainnlpstsmodel",
       "dockerTag": "1.0.0",
       "gitBranch": "main",
       "gitPath": "/",
