@@ -5,7 +5,7 @@ from torch.nn import MSELoss
 
 logger = logging.getLogger(__name__)
 
-def evaluate(baseline_model, tuned_model, df_val):
+def evaluate_models(baseline_model, tuned_model, df_val):
 
     logger.info(f'4. Evaluating performance.')
 

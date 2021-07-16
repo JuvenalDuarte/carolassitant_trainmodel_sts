@@ -1,4 +1,4 @@
-from ..functions.evaluate import evaluate
+from ..functions.evaluate_results import evaluate_models
 from .commons import Task
 import luigi
 from . import prepare_data
@@ -15,7 +15,7 @@ luigi.auto_namespace(scope=__name__)
     run_finetuning.RunFineTuning,
     prepare_data.PrepareData
 )
-class Evaluate(Task):
+class EvaluateResults(Task):
     app_to_publish = luigi.Parameter()
     publication_criteria = luigi.Parameter()
     datetime = luigi.Parameter() 
@@ -26,7 +26,7 @@ class Evaluate(Task):
         train, validation = inputs[2]
 
         if validation:
-            df_val = evaluate(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
+            df_val = evaluate_models(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
         else:
             df_val = None
 
