@@ -16,7 +16,7 @@
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "trainstsmodel/trainnlpstsmodel:1.0.2",
+            "dockerImage": "trainstsmodel/trainnlpstsmodel:1.0.3",
             "instanceType": "c1.large"
           },
           "environments": {
@@ -30,7 +30,7 @@
   "docker": [
     {
       "dockerName": "trainnlpstsmodel",
-      "dockerTag": "1.0.2",
+      "dockerTag": "1.0.3",
       "gitBranch": "main",
       "gitPath": "/",
       "instanceType": "c1.small",
