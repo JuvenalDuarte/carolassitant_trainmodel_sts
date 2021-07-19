@@ -11,10 +11,10 @@ import logging
 logger = logging.getLogger(__name__)
 luigi.auto_namespace(scope=__name__)
 
-@inherit_list(
-    load_model.LoadModel,
-    prepare_data.PrepareData
-)
+#@inherit_list(
+#    load_model.LoadModel,
+#    prepare_data.PrepareData
+#)
 class RunBaseline(Task):
     datetime = luigi.Parameter() 
     

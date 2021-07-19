@@ -9,10 +9,10 @@ import logging
 logger = logging.getLogger(__name__)
 luigi.auto_namespace(scope=__name__)
 
-@inherit_list(
-    load_model.LoadModel,
-    run_baseline.RunBaseline
-)
+#@inherit_list(
+#    load_model.LoadModel,
+#    run_baseline.RunBaseline
+#)
 class RunFineTuning(Task):
     baseline = luigi.Parameter() 
     finetune_factor = luigi.FloatParameter()
