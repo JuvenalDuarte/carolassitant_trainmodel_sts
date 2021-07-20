@@ -60,10 +60,13 @@ def prepare_data(training_table, validation_table, attr_map):
     logger.info(f'Parsing \"training_mapping\" setting.')
     attr_map = json.loads(attr_map)
 
-    similarity_col = attr_map["similarity"]
+    logger.info(f'Setting standard column names')
+    train_dataset.rename(columns=attr_map, inplace=True)
+    validation_dataset.rename(columns=attr_map, inplace=True)
+
     total_training = len(train_dataset)
     total_validation = len(validation_dataset)
-    similar_training = len(train_dataset[train_dataset[similarity_col] == 1])
+    similar_training = len(train_dataset[train_dataset["similarity"] == 1])
     similar_ratio_training = 1.0 * similar_training/ total_training
     disimilar_ratio_training = 1.0 * (total_training - similar_training)/ total_training
 
@@ -72,10 +75,6 @@ def prepare_data(training_table, validation_table, attr_map):
     logger.info(f' - Similar pairs (%) on training: {similar_ratio_training}.')
     logger.info(f' - Disimilar pairs (%) on training: {disimilar_ratio_training}.')
     logger.info(f' - Total validation records: {total_validation}.')
-
-    logger.info(f'Setting standard column names')
-    train_dataset.rename(columns=attr_map, inplace=True)
-    validation_dataset.rename(columns=attr_map, inplace=True)
 
     logger.info(f'Filtering target columns only')
     train_dataset = train_dataset[attr_map.values()] 

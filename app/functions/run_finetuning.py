@@ -80,7 +80,7 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, epchs = 10,
     logger.info(f'3. Running fine tuning.')
     
     logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
-    baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump))
+    baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)
 
     logger.info(f'Preparing the dataset.')
     samples_df = prepare_samples(baseline_df)
