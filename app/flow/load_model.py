@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 luigi.auto_namespace(scope=__name__)
 
 class LoadModel(Task):
+    datetime = luigi.Parameter()
     baseline = luigi.Parameter()
     target_type = PytorchTarget
 
