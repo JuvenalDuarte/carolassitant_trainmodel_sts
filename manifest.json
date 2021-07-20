@@ -17,7 +17,7 @@
           "profile": "",
           "properties": {
             "dockerImage": "trainstsmodel/trainnlpstsmodel:1.0.3",
-            "instanceType": "c1.large"
+            "instanceType": "g1.v100.large"
           },
           "environments": {
             "ENV": "PROD",
