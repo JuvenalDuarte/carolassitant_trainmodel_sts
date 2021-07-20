@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.2-base
+FROM totvslabs/pycarol:2.40.0
 
 RUN mkdir /app
 WORKDIR /app
