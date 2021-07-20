@@ -1,6 +1,7 @@
 pycarol[complete]
 python-dotenv
 python-json-logger
-#torch==1.4.0
+torch
+torchvision
 sentencepiece==0.1.92
 sentence-transformers
