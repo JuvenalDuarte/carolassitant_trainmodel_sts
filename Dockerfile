@@ -1,4 +1,4 @@
-FROM totvslabs/pycarol:2.40.0
+FROM nvidia/cuda:10.2-base
 
 RUN mkdir /app
 WORKDIR /app
@@ -8,6 +8,5 @@ RUN pip install -r requirements.txt
 ADD . /app
 
 RUN rm -rf tmp
-RUN apt-get install nvidia-container-runtime
 
 CMD ["python", "run.py"]
