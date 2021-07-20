@@ -10,11 +10,11 @@ import logging
 logger = logging.getLogger(__name__)
 luigi.auto_namespace(scope=__name__)
 
-#@inherit_list(
-#    load_model.LoadModel,
-#    run_finetuning.RunFineTuning,
-#    prepare_data.PrepareData
-#)
+@inherit_list(
+    load_model.LoadModel,
+    run_finetuning.RunFineTuning,
+    prepare_data.PrepareData
+)
 class EvaluateResults(Task):
     app_to_publish = luigi.Parameter()
     publication_criteria = luigi.Parameter()
