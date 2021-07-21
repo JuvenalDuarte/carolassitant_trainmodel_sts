@@ -1,7 +1,7 @@
 import logging
 from sentence_transformers import util
 from ..functions.run_baseline import getEmbeddingsCache, calculateSimilarities
-from torch.nn import MSELoss
+import torch
 from datetime import datetime
 from pycarol import Carol, Storage
 import pickle
@@ -52,12 +52,16 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
     df_val["tuned_similarity"] = similarities
 
 
-    loss = MSELoss()
-    mse_baseline = loss(df_val["similarity"].values, df_val["baseline_similarity"].values)
+    loss = torch.nn.MSELoss()
+    target_tensor = torch.Tensor(df_val["similarity"].values)
+    result_tensor = torch.Tensor(df_val["baseline_similarity"].values)
+    mse_baseline = loss(target_tensor, result_tensor)
     logger.info(f'Mean Squared Error (MSE) for baseline model: {mse_baseline}.')
 
-    loss = MSELoss()
-    mse_tuned = loss(df_val["similarity"].values, df_val["tuned_similarity"].values)
+    loss = torch.nn.MSELoss()
+    target_tensor = torch.Tensor(df_val["similarity"].values)
+    result_tensor = torch.Tensor(df_val["tuned_similarity"].values)
+    mse_tuned = loss(target_tensor, result_tensor)
     logger.info(f'Mean Squared Error (MSE) for tuned model: {mse_tuned}.')
 
 
