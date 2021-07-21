@@ -19,14 +19,15 @@ class EvaluateResults(Task):
     app_to_publish = luigi.Parameter()
     publication_criteria = luigi.Parameter()
     datetime = luigi.Parameter() 
+    baseline = luigi.Parameter() 
     
     def easy_run(self, inputs):
         bmodel = inputs[0]
         tmodel = inputs[1]
         train, validation = inputs[2]
 
-        if validation:
-            df_val = evaluate_models(baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
+        if len(validation):
+            df_val = evaluate_models(baseline_name=self.baseline, target_app=self.app_to_publish, baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
         else:
             df_val = None
 
