@@ -65,7 +65,7 @@ epochs = _settings.get('finetune_epochs')
 batchsize = _settings.get('finetune_batchsize')
 
 # After fine tuning the model will be deployed to the app defined below, if the
-# criteria is accepted.
+# criteria is accepted. If list, model will be published to each of the apps
 app_to_publish = _settings.get('app_to_publish')
 
 # Allows user to specify condutions when the model is published after training.

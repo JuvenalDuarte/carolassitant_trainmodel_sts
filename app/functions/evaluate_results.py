@@ -68,9 +68,14 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
     if (mse_tuned < mse_baseline) and (target_app != ""):
         logger.info(f'Tunned model performed better than the baselina. Saving it to target app.')
 
-        #Saves the new trained model to the target app.
+        # Sends the model back to the CPU to asure compatibility with other apps
+        tuned_model.to('cpu')
+
         saveto = baseline_name + "_FT" + str(datetime.now().strftime('%y%m%d%H%M%S'))
-        logger.info(f'Saving model to {saveto} on storage.')
-        save_model_to_onlineapp(tuned_model, target_app, saveto)
+        for a in target_app.split(","):
+            #Saves the new trained model to the target app.
+            
+            logger.info(f'Saving model to {saveto} on storage.')
+            save_model_to_onlineapp(tuned_model, a, saveto)
     
     return df_val
