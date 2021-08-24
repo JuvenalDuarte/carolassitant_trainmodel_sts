@@ -3,6 +3,7 @@ from sentence_transformers import util
 from pycarol import Carol, Storage
 import torch
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,93 @@ def calculateSimilarities(embd_vec_1, embd_vec_2):
 
     return similarities
 
+def getRanking(test_set, knowledgebase, filter_column = "module"):
+    out = []
+
+    for m in test_set[filter_column].unique():
+        logger.info(f'Evaluating searchs on \"{m}\".')
+        tmp1 = test_set[test_set[filter_column] == m].copy()
+        tmp2 = knowledgebase[knowledgebase[filter_column] == m].copy()
+
+        narticles = tmp2["id"].nunique()
+
+        logger.info(f"INFO* Searching \"{len(tmp1)}\" messages within \"{narticles}\" articles for module {m}.")
+
+        if len(tmp1) < 1 and (math.isnan(m) or m is None):
+            logger.warn(f"WARN* Module not define \"{m}\". Searching through all articles.")
+            continue
+
+        if len(tmp2) < 1:
+            logger.warn(f"WARN* Module {m} not found on articles.")
+            continue
+
+        targets = list(tmp1["article_id"].values)
+
+        post = tmp1.copy()
+        targetRanking = [9999] * len(post)
+
+        all_scores_above = [np.nan] * len(post)
+        all_sentences_above = [""] * len(post)
+        all_articles_above = [""] * len(post)
+        matching_sentence = [""] * len(post)
+
+        f1 = "search_embd"
+        torch_l1 = [torch.from_numpy(v) for v in tmp1[f1].values]
+        msg_embd_tensor = torch.stack(torch_l1, dim=0)
+        
+        f2 = "sentence_embedding"
+        torch_l2 = [torch.from_numpy(v) for v in tmp2[f2].values]
+        doc_embd_tensor = torch.stack(torch_l2, dim=0)
+        
+        id_column = list(tmp2.columns).index("id")
+        sentence_column = list(tmp2.columns).index("sentence")
+        topranking = min(len(tmp2), 1000)
+        score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
+        values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
+
+        for i in range(len(idx_rank)):
+            preds = tmp2.iloc[idx_rank[i, :].tolist(), id_column]
+            sents = tmp2.iloc[idx_rank[i, :].tolist(), sentence_column]
+            scores = values_rank[i, :]
+
+            if np.isscalar(preds):
+                preds = [preds]
+                sents = [sents]
+            else:
+                preds = list(preds.values)
+                sents = list(sents.values)
+
+            articles_above = []
+            sentences_above = []
+            scores_above = []
+            for j in range(len(preds)):
+                if str(preds[j]) == str(targets[i]):
+                    # takes the highest ranking only, since an article is represented by multiple 
+                    # sentences (title, tags, question)
+                    targetRanking[i] = j + 1
+                    matching_sentence[i] = sents[j]
+                    all_articles_above[i] = ",".join(list(set(articles_above)))
+                    all_sentences_above[i] = "|".join(sentences_above)
+                    all_scores_above[i] = [round(float(s), 2) for s in scores_above]
+                    break
+                    
+                else:
+                   sentences_above.append(str(sents[j])) 
+                   articles_above.append(str(preds[j]))
+                   scores_above.append(scores[j])
+
+        post["target_ranking"] = targetRanking
+        post["all_sentences_above"] = all_sentences_above
+        post["all_articles_above"] = all_articles_above
+        post["all_scores_above"] = all_scores_above
+        post["matching_sentence"] = matching_sentence
+
+        out.append(post)
+
+    df4 = pd.concat(out)
+        
+    return df4
+
 def run_baseline(model, model_name, df_train, df_kb):
 
     logger.info(f'2. Running baseline evaluation.')
@@ -103,18 +191,42 @@ def run_baseline(model, model_name, df_train, df_kb):
         df_kb = storage.load(kb_file, format='pickle', cache=False)
 
         logger.info('Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
-        filter_column = "module"
-        for m in df_train[filter_column].unique():
-            logger.info(f'Evaluating searchs on \"{m}\".')
-            tmp1 = df_train[df_train[filter_column] == m].copy()
-            tmp2 = df_kb[df_kb[filter_column] == m]
 
-            targets = list(tmp1["article_id"].values)
+        rank_df = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
 
-            msg_embd_tensor = tmp1["search_embd"].values
-            doc_embd_tensor = tmp2["sentence_embedding"].values
+        total_tests = df_train.shape[0]
+        baseline_top1 = len(rank_df[rank_df["target_ranking"] == 1])
+        baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
+        logger.info('Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
 
-            score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
-            values, idx = torch.topk(score, k=1, dim=1, sorted=True)
+        baseline_top3 = len(rank_df[rank_df["target_ranking"] <= 3])
+        baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
+        logger.info('Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
+
+        no_training_needed = rank_df[rank_df["target_ranking"] <= 3]
+        training_needed = rank_df[rank_df["target_ranking"] > 3]
+
+        logger.info('Preparing positive samples.')
+        pos_samples = training_needed.copy()
+        pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+        pos_samples["similarity"] = 1
+
+        logger.info('Preparing negative samples.')
+        neg_samples = training_needed.copy()
+        neg_samples_to_use = 1
+        neg_samples["all_sentences_above"] = pos_samples["all_sentences_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
+        neg_samples["all_scores_above"] = pos_samples["all_scores_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
+
+        neg_samples_p1 = neg_samples.explode(column="all_sentences_above")
+        neg_samples_p2 = neg_samples.explode(column="all_scores_above")
+
+        neg_samples_p1["all_scores_above"] = neg_samples_p2["all_scores_above"]
+
+        neg_samples = neg_samples_p1.copy()
+        neg_samples["sentence1"] = neg_samples["all_sentences_above"]
+        neg_samples["baseline_similarity"] = neg_samples["all_scores_above"]
+        neg_samples["similarity"] = 0
+
+        df_train = pd.concat([pos_samples, neg_samples], ignore_index=True)
 
     return df_train

@@ -21,7 +21,7 @@ def save_model_to_onlineapp(obj, targetapp, filename):
 
     storage.save(filename, obj, format='pickle')
 
-def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val):
+def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val, df_kb):
 
     logger.info(f'4. Evaluating performance.')
 
@@ -63,7 +63,6 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
     result_tensor = torch.Tensor(df_val["tuned_similarity"].values)
     mse_tuned = loss(target_tensor, result_tensor)
     logger.info(f'Mean Squared Error (MSE) for tuned model: {mse_tuned}.')
-
 
     if (mse_tuned < mse_baseline) and (target_app != ""):
         logger.info(f'Tunned model performed better than the baselina. Saving it to target app.')

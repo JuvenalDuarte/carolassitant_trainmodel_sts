@@ -18,6 +18,7 @@ luigi.auto_namespace(scope=__name__)
 class EvaluateResults(Task):
     app_to_publish = luigi.Parameter()
     publication_criteria = luigi.Parameter()
+    knowledgebase_file = luigi.Parameter()
     datetime = luigi.Parameter() 
     baseline = luigi.Parameter() 
     
@@ -27,7 +28,7 @@ class EvaluateResults(Task):
         train, validation = inputs[2]
 
         if len(validation):
-            df_val = evaluate_models(baseline_name=self.baseline, target_app=self.app_to_publish, baseline_model=bmodel, tuned_model=tmodel, df_val=validation)
+            df_val = evaluate_models(baseline_name=self.baseline, target_app=self.app_to_publish, baseline_model=bmodel, tuned_model=tmodel, df_val=validation, df_kb=self.knowledgebase_file)
         else:
             df_val = None
 
