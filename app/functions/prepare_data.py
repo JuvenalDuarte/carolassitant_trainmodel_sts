@@ -52,7 +52,7 @@ def prepare_data(training_table, validation_table, attr_map):
             raise "Unable to parse \"validation_pairs_table\" setting. Valid options are: 1. env/connector/staging; 2. connector/staging."
 
         logger.info(f'Retrieving validation data from {val_conn}/{val_stag}.')
-        validation_dataset = fetchFromCarol(conn=train_conn, stag=train_stag)
+        validation_dataset = fetchFromCarol(conn=val_conn, stag=val_stag)
 
     else:
         validation_dataset = pd.DataFrame()

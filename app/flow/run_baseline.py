@@ -16,7 +16,9 @@ luigi.auto_namespace(scope=__name__)
     prepare_data.PrepareData
 )
 class RunBaseline(Task):
-    datetime = luigi.Parameter() 
+    datetime = luigi.Parameter()
+    baseline = luigi.Parameter()
+    knowledgebase_file = luigi.Parameter()
     
     #target_type = PickleTarget
     #target_type = PytorchTarget
@@ -25,6 +27,9 @@ class RunBaseline(Task):
         model = inputs[0]
         train, validation = inputs[1]
 
-        base_df = run_baseline(model=model, df_train=train)
+        base_df = run_baseline(model=model,
+                               model_name=self.baseline,
+                               df_train=train, 
+                               df_kb=self.knowledgebase_file)
 
         return base_df

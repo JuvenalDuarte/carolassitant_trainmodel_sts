@@ -33,12 +33,12 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
 
 
     logger.info(f'Calculating embeddings for baseline.')
-    sentence2embedding = getEmbeddingsCache(uniq_sentences, baseline_model, cache=False)
+    sentence2embedding = getEmbeddingsCache(uniq_sentences, baseline_model, baseline_name, cache=True)
     sentence1_embd_base = [sentence2embedding[s] for s in df_val["sentence1"].values]
     sentence2_embd_base = [sentence2embedding[s] for s in df_val["sentence2"].values]
 
     logger.info(f'Calculating embeddings for tuned.')
-    sentence2embedding = getEmbeddingsCache(uniq_sentences, tuned_model, cache=False)
+    sentence2embedding = getEmbeddingsCache(uniq_sentences, tuned_model, model_name="", cache=False)
     sentence1_embd_tuned = [sentence2embedding[s] for s in df_val["sentence1"].values]
     sentence2_embd_tuned = [sentence2embedding[s] for s in df_val["sentence2"].values]
 

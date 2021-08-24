@@ -49,6 +49,9 @@ training_mapping = _settings.get('training_mapping')
 # (without fine tuning).
 validation_table = _settings.get('validation_pairs_table')
 
+# TODO.
+knowledgebase_file = _settings.get('knowledgebase_file')
+
 # This factor determines how agressive should the fine tunning/ domain adaptation be.
 # If the factor is close to 1 then there's a high chance the pretrained model will fully 
 # overwriten. When close to 0 it indicates the original model will preserved, but only
@@ -103,6 +106,7 @@ params = dict(
     training_table = training_table,
     training_mapping = training_mapping,
     validation_table = validation_table,
+    knowledgebase_file = knowledgebase_file,
     finetune_factor = finetune_factor,
     app_to_publish = app_to_publish,
     publication_criteria = publication_criteria,
