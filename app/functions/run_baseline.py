@@ -182,7 +182,7 @@ def run_baseline(model, model_name, df_train, df_kb):
             login.switch_environment(org_name=login.organization, env_name=kb_env, app_name=kb_app)
         elif len(kb_list) == 2:
             kb_app, kb_file = kb_list
-            login.switch_environment(org_name=login.organization, env_name=login.environment, app_name=kb_app)
+            login.app_name = kb_app
         else:
             raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
 
