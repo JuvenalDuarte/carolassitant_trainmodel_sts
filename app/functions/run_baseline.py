@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import pandas as pd
 import gc
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module"):
         f2 = "sentence_embedding"
         torch_l2 = [torch.from_numpy(v) for v in tmp2[f2].values]
         doc_embd_tensor = torch.stack(torch_l2, dim=0)
-        
+
         id_column = list(tmp2.columns).index("id")
         sentence_column = list(tmp2.columns).index("sentence")
         topranking = min(len(tmp2), 1000)
@@ -170,6 +171,12 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
     similarities = calculateSimilarities(target_embd, search_embd)
     df_train["baseline_similarity"] = similarities
 
+    del sentence2embedding
+    del similarities
+    del target_embd
+    del search_embd
+    gc.collect()
+
     if df_kb:
 
         login = Carol()
@@ -224,20 +231,20 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         del rank_df
         gc.collect()
 
-        logger.info('Preparing positive samples.')
         pos_samples = training_needed[["search", "target", "all_scores_above"]].copy()
+        neg_samples = training_needed[["search", "all_sentences_above", "all_scores_above"]].copy()
+        del training_needed
+        gc.collect()
+
+        logger.info('Preparing positive samples.')
         pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
         pos_samples["similarity"] = 1
         pos_samples.drop(columns="all_scores_above")
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
-        neg_samples = training_needed[["search", "all_sentences_above", "all_scores_above"]].copy()
-        del training_needed
-        gc.collect()
 
         neg_samples_to_use = 1
-
         neg_samples["all_sentences_above"] = pos_samples["all_sentences_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
         neg_samples["all_scores_above"] = pos_samples["all_scores_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
 
@@ -246,10 +253,11 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         neg_samples_p2 = neg_samples.explode(column="all_scores_above")
 
         neg_samples_p1["all_scores_above"] = neg_samples_p2["all_scores_above"]
+        del neg_samples_p2
+        gc.collect()
 
         neg_samples = neg_samples_p1.copy()
         del neg_samples_p1
-        del neg_samples_p2
         gc.collect()
 
         logger.info(f'Total negative samples: {neg_samples.shape[0]}.')
