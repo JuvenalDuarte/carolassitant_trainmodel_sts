@@ -190,18 +190,18 @@ def run_baseline(model, model_name, df_train, df_kb):
         logger.info('Loading knowledge base from \"{df_kb}\".')
         df_kb = storage.load(kb_file, format='pickle', cache=False)
 
-        logger.info('Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
+        logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
 
         rank_df = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
 
         total_tests = df_train.shape[0]
         baseline_top1 = len(rank_df[rank_df["target_ranking"] == 1])
         baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
-        logger.info('Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
+        logger.info(f'Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
 
         baseline_top3 = len(rank_df[rank_df["target_ranking"] <= 3])
         baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
-        logger.info('Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
+        logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
         no_training_needed = rank_df[rank_df["target_ranking"] <= 3]
         training_needed = rank_df[rank_df["target_ranking"] > 3]

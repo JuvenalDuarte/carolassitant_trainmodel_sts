@@ -76,8 +76,8 @@ def prepare_data(training_table, validation_table, attr_map):
     logger.info(f' - Disimilar pairs (%) on training: {disimilar_ratio_training}.')
     logger.info(f' - Total validation records: {total_validation}.')
 
-    logger.info(f'Filtering target columns only')
-    train_dataset = train_dataset[attr_map.values()] 
-    validation_dataset = validation_dataset[attr_map.values()]
+    #logger.info(f'Filtering target columns only')
+    #train_dataset = train_dataset[attr_map.values()] 
+    #validation_dataset = validation_dataset[attr_map.values()]
 
     return train_dataset, validation_dataset
