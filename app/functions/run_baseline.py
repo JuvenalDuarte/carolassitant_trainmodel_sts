@@ -4,6 +4,7 @@ from pycarol import Carol, Storage
 import torch
 import numpy as np
 import pandas as pd
+import gc
 
 logger = logging.getLogger(__name__)
 
@@ -149,52 +150,68 @@ def getRanking(test_set, knowledgebase, filter_column = "module"):
         
     return df4
 
-def run_baseline(model, model_name, df_train, df_kb):
+def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
     logger.info(f'2. Running baseline evaluation.')
 
-    uniq_sentences = list(df_train["sentence1"].unique())
-    uniq_sentences = uniq_sentences + list(df_train["sentence2"].unique())
+    uniq_sentences = list(df_train["target"].unique())
+    uniq_sentences = uniq_sentences + list(df_train["search"].unique())
     uniq_sentences = list(set(uniq_sentences))
     total = len(uniq_sentences)
     logger.info(f'Calculating embeddings for {total} unique sentences on training set.')
     sentence2embedding = getEmbeddingsCache(uniq_sentences, model, model_name, cache=True)
 
     logger.info(f'Translating sentences to embeddings.')
-    sentence1_embd = [sentence2embedding[s] for s in df_train["sentence1"].values]
-    sentence2_embd = [sentence2embedding[s] for s in df_train["sentence2"].values]
-    df_train["search_embd"] = sentence2_embd
+    target_embd = [sentence2embedding[s] for s in df_train["target"].values]
+    search_embd = [sentence2embedding[s] for s in df_train["search"].values]
+    df_train["search_embd"] = search_embd
 
     logger.info(f'Calculating baseline similarities.')
-    similarities = calculateSimilarities(sentence1_embd, sentence2_embd)
+    similarities = calculateSimilarities(target_embd, search_embd)
     df_train["baseline_similarity"] = similarities
 
     if df_kb:
-        logger.info(f'Parsing \"knowledgebase_file\" setting.')
 
         login = Carol()
-        kb_list = df_kb.split("/")
-        if len(kb_list) == 4:
-            kb_org, kb_env, kb_app, kb_file = kb_list
-            login.switch_environment(org_name=kb_org, env_name=kb_env, app_name=kb_app)
-        if len(kb_list) == 3:
-            kb_env, kb_app, kb_file = kb_list
-            login.switch_environment(org_name=login.organization, env_name=kb_env, app_name=kb_app)
-        elif len(kb_list) == 2:
-            kb_app, kb_file = kb_list
-            login.app_name = kb_app
-        else:
-            raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
+        if reuse_ranking:
+            logger.info(f'Loading ranking from previous execution.')
+            try:
+                rank_df = Storage(login).load("baseline_ranking", format='pickle', cache=False)
+            except:
+                logger.info(f'Unble to load ranking from prevoius execution. Re-runing.')
+                rank_df = None
 
-        storage = Storage(login)
-        logger.info('Loading knowledge base from \"{df_kb}\".')
-        df_kb = storage.load(kb_file, format='pickle', cache=False)
+        if (not reuse_ranking) or (rank_df is None):
+            logger.info(f'Parsing \"knowledgebase_file\" setting.')
+            
+            kb_list = df_kb.split("/")
+            if len(kb_list) == 4:
+                kb_org, kb_env, kb_app, kb_file = kb_list
+                login.switch_environment(org_name=kb_org, env_name=kb_env, app_name=kb_app)
+            if len(kb_list) == 3:
+                kb_env, kb_app, kb_file = kb_list
+                login.switch_environment(org_name=login.organization, env_name=kb_env, app_name=kb_app)
+            elif len(kb_list) == 2:
+                kb_app, kb_file = kb_list
+                login.app_name = kb_app
+            else:
+                raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
 
-        logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
+            logger.info(f'Loading knowledge base from \"{df_kb}\".')
+            df_kb = Storage(login).load(kb_file, format='pickle', cache=False)
 
-        rank_df = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
+            logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
 
-        total_tests = df_train.shape[0]
+            total_tests = df_train.shape[0]
+
+            rank_df = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
+            del df_train
+            del df_kb
+            gc.collect()
+
+            logger.info(f'Saving rankings for future executions.')
+            Storage(login).save("baseline_ranking", rank_df, format='pickle')
+
         baseline_top1 = len(rank_df[rank_df["target_ranking"] == 1])
         baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
@@ -203,30 +220,47 @@ def run_baseline(model, model_name, df_train, df_kb):
         baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
-        no_training_needed = rank_df[rank_df["target_ranking"] <= 3]
         training_needed = rank_df[rank_df["target_ranking"] > 3]
+        del rank_df
+        gc.collect()
 
         logger.info('Preparing positive samples.')
-        pos_samples = training_needed.copy()
+        pos_samples = training_needed[["search", "target", "all_scores_above"]].copy()
         pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
         pos_samples["similarity"] = 1
+        pos_samples.drop(columns="all_scores_above")
+        logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
-        neg_samples = training_needed.copy()
+        neg_samples = training_needed[["search", "all_sentences_above", "all_scores_above"]].copy()
+        del training_needed
+        gc.collect()
+
         neg_samples_to_use = 1
+
         neg_samples["all_sentences_above"] = pos_samples["all_sentences_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
         neg_samples["all_scores_above"] = pos_samples["all_scores_above"].apply(lambda x: x[:neg_samples_to_use] if type(x) is list else np.nan)
 
+        logger.info('Expanding wrong matches.')
         neg_samples_p1 = neg_samples.explode(column="all_sentences_above")
         neg_samples_p2 = neg_samples.explode(column="all_scores_above")
 
         neg_samples_p1["all_scores_above"] = neg_samples_p2["all_scores_above"]
 
         neg_samples = neg_samples_p1.copy()
-        neg_samples["sentence1"] = neg_samples["all_sentences_above"]
+        del neg_samples_p1
+        del neg_samples_p2
+        gc.collect()
+
+        logger.info(f'Total negative samples: {neg_samples.shape[0]}.')
+
+        neg_samples["target"] = neg_samples["all_sentences_above"]
         neg_samples["baseline_similarity"] = neg_samples["all_scores_above"]
         neg_samples["similarity"] = 0
+        neg_samples.drop(columns=["all_sentences_above","all_scores_above"])
 
+        logger.info('Concatenating positive and negative samples.')
         df_train = pd.concat([pos_samples, neg_samples], ignore_index=True)
 
+    logger.info(f'Baseline evaluation finished.')
     return df_train

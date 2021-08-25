@@ -18,6 +18,7 @@ luigi.auto_namespace(scope=__name__)
 class RunBaseline(Task):
     datetime = luigi.Parameter()
     baseline = luigi.Parameter()
+    reuse_ranking = luigi.Parameter()
     knowledgebase_file = luigi.Parameter()
     
     #target_type = PickleTarget
@@ -30,6 +31,7 @@ class RunBaseline(Task):
         base_df = run_baseline(model=model,
                                model_name=self.baseline,
                                df_train=train, 
-                               df_kb=self.knowledgebase_file)
+                               df_kb=self.knowledgebase_file,
+                               reuse_ranking=self.reuse_ranking)
 
         return base_df

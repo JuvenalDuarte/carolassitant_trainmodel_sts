@@ -25,8 +25,8 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
 
     logger.info(f'4. Evaluating performance.')
 
-    uniq_sentences = list(df_val["sentence1"].unique())
-    uniq_sentences = uniq_sentences + list(df_val["sentence2"].unique())
+    uniq_sentences = list(df_val["target"].unique())
+    uniq_sentences = uniq_sentences + list(df_val["search"].unique())
     uniq_sentences = list(set(uniq_sentences))
     total = len(uniq_sentences)
     logger.info(f'Processing {total} unique sentences on validation set.')
@@ -34,21 +34,21 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
 
     logger.info(f'Calculating embeddings for baseline.')
     sentence2embedding = getEmbeddingsCache(uniq_sentences, baseline_model, baseline_name, cache=True)
-    sentence1_embd_base = [sentence2embedding[s] for s in df_val["sentence1"].values]
-    sentence2_embd_base = [sentence2embedding[s] for s in df_val["sentence2"].values]
+    target_embd_base = [sentence2embedding[s] for s in df_val["target"].values]
+    search_embd_base = [sentence2embedding[s] for s in df_val["search"].values]
 
     logger.info(f'Calculating embeddings for tuned.')
     sentence2embedding = getEmbeddingsCache(uniq_sentences, tuned_model, model_name="", cache=False)
-    sentence1_embd_tuned = [sentence2embedding[s] for s in df_val["sentence1"].values]
-    sentence2_embd_tuned = [sentence2embedding[s] for s in df_val["sentence2"].values]
+    target_embd_tuned = [sentence2embedding[s] for s in df_val["target"].values]
+    search_embd_tuned = [sentence2embedding[s] for s in df_val["search"].values]
 
 
     logger.info(f'Calculating baseline similarities.')
-    similarities = calculateSimilarities(sentence1_embd_base, sentence2_embd_base)
+    similarities = calculateSimilarities(target_embd_base, search_embd_base)
     df_val["baseline_similarity"] = similarities
 
     logger.info(f'Calculating tuned similarities.')
-    similarities = calculateSimilarities(sentence1_embd_tuned, sentence2_embd_tuned)
+    similarities = calculateSimilarities(target_embd_tuned, search_embd_tuned)
     df_val["tuned_similarity"] = similarities
 
 

@@ -81,6 +81,9 @@ app_to_publish = _settings.get('app_to_publish')
 #   - "0.0" to "1.0": Minimum acceptable accuracy on validation
 publication_criteria = _settings.get('publication_criteria')
 
+# TODO DO
+reuse_ranking = _settings.get('reuse_ranking')
+
 @Task.event_handler(luigi.Event.FAILURE)
 def mourn_failure(task, exception):
     """Will be called directly after a failed execution
@@ -111,5 +114,6 @@ params = dict(
     app_to_publish = app_to_publish,
     publication_criteria = publication_criteria,
     epochs = epochs,
+    reuse_ranking = reuse_ranking,
     batchsize= batchsize
 )
