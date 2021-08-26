@@ -192,21 +192,23 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         if (not reuse_ranking) or (df_train is None):
             logger.info(f'Parsing \"knowledgebase_file\" setting.')
             
+            login_kb = Carol()
             kb_list = df_kb.split("/")
             if len(kb_list) == 4:
                 kb_org, kb_env, kb_app, kb_file = kb_list
-                login.switch_environment(org_name=kb_org, env_name=kb_env, app_name=kb_app)
+                login_kb.switch_environment(org_name=kb_org, env_name=kb_env, app_name=kb_app)
             if len(kb_list) == 3:
                 kb_env, kb_app, kb_file = kb_list
-                login.switch_environment(org_name=login.organization, env_name=kb_env, app_name=kb_app)
+                login_kb.switch_environment(org_name=login_kb.organization, env_name=kb_env, app_name=kb_app)
             elif len(kb_list) == 2:
                 kb_app, kb_file = kb_list
-                login.app_name = kb_app
+                login_kb.app_name = kb_app
             else:
                 raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
 
             logger.info(f'Loading knowledge base from \"{df_kb}\".')
-            df_kb = stg.load(kb_file, format='pickle', cache=False)
+            stg_kb = Storage(login_kb)
+            df_kb = stg_kb.load(kb_file, format='pickle', cache=False)
 
             logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
 
