@@ -180,15 +180,16 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
     if df_kb:
 
         login = Carol()
+        stg = Storage(login)
         if reuse_ranking:
             logger.info(f'Loading ranking from previous execution.')
             try:
-                rank_df = Storage(login).load("baseline_ranking", format='pickle', cache=False)
+                df_train = stg.load("baseline_ranking", format='pickle', cache=False)
             except:
                 logger.info(f'Unble to load ranking from prevoius execution. Re-runing.')
-                rank_df = None
+                df_train = None
 
-        if (not reuse_ranking) or (rank_df is None):
+        if (not reuse_ranking) or (df_train is None):
             logger.info(f'Parsing \"knowledgebase_file\" setting.')
             
             kb_list = df_kb.split("/")
@@ -205,36 +206,31 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
                 raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
 
             logger.info(f'Loading knowledge base from \"{df_kb}\".')
-            df_kb = Storage(login).load(kb_file, format='pickle', cache=False)
+            df_kb = stg.load(kb_file, format='pickle', cache=False)
 
             logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
 
             total_tests = df_train.shape[0]
 
-            rank_df = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
-            del df_train
+            df_train = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
+            df_train.drop(columns=["search_embd"], inplace=True)
             del df_kb
             gc.collect()
 
             logger.info(f'Saving rankings for future executions.')
-            Storage(login).save("baseline_ranking", rank_df, format='pickle')
+            stg.save("baseline_ranking", df_train, format='pickle')
 
-        baseline_top1 = len(rank_df[rank_df["target_ranking"] == 1])
+        baseline_top1 = sum(df_train["target_ranking"] == 1)
         baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
 
-        baseline_top3 = len(rank_df[rank_df["target_ranking"] <= 3])
+        baseline_top3 = sum(df_train["target_ranking"] <= 3)
         baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
-        training_needed = rank_df[rank_df["target_ranking"] > 3]
-        del rank_df
-        gc.collect()
-
-        pos_samples = training_needed[["search", "target", "all_scores_above"]].copy()
-        neg_samples = training_needed[["search", "all_sentences_above", "all_scores_above"]].copy()
-        del training_needed
-        gc.collect()
+        df_train = df_train[df_train["target_ranking"] > 3]
+        pos_samples = df_train[["search", "target", "all_scores_above"]].copy()
+        neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
 
         logger.info('Preparing positive samples.')
         pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
