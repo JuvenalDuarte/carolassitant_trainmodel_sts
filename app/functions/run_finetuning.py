@@ -1,5 +1,5 @@
 import logging
-from sentence_transformers import InputExample, losses
+from sentence_transformers import InputExample, datasets, losses
 from torch.utils.data import DataLoader
 from pycarol import Carol, Storage
 from datetime import datetime
@@ -74,10 +74,36 @@ def save_object_to_storage(obj, filename):
 
     storage.save(filename, obj, format='pickle')
 
+def unsupervised_pretrain_TSDAE(baselinemodel, sentence_list, epochs=10):
+    # Create the special denoising dataset that adds noise on-the-fly
+    train_dataset = datasets.DenoisingAutoEncoderDataset(sentence_list)
 
-def run_finetuning(baseline_model, baseline_name, baseline_df, bump, epchs = 10, bsize = 90):
+    # DataLoader to batch your data
+    train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+
+    # Use the denoising auto-encoder loss
+    train_loss = losses.DenoisingAutoEncoderLoss(baselinemodel, decoder_name_or_path=model_name, tie_encoder_decoder=True)
+
+    # Call the fit method
+    baselinemodel.fit(
+        train_objectives=[(train_dataloader, train_loss)],
+        epochs=epochs,
+        weight_decay=0,
+        scheduler='constantlr',
+        optimizer_params={'lr': 3e-5},
+        show_progress_bar=False
+    )
+
+    return baselinemodel
+
+def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretrain, epchs = 10, bsize = 90):
 
     logger.info(f'3. Running fine tuning.')
+
+    if unsup_pretrain == "TSDAE":
+        logger.info(f'Running unsupervised pretraining through TSDAE. Using search and target fields as input text.')
+        pretraintext = list(baseline_df["search"].values) + list(baseline_df["target"].values)
+        baseline_model = unsupervised_pretrain_TSDAE(baseline_model, pretraintext, epochs=epchs)
     
     logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
     baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)

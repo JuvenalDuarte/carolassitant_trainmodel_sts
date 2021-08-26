@@ -52,6 +52,10 @@ validation_table = _settings.get('validation_pairs_table')
 # TODO.
 knowledgebase_file = _settings.get('knowledgebase_file')
 
+
+# TODO.
+unsupervised_finetune = _settings.get('unsupervised_finetune')
+
 # This factor determines how agressive should the fine tunning/ domain adaptation be.
 # If the factor is close to 1 then there's a high chance the pretrained model will fully 
 # overwriten. When close to 0 it indicates the original model will preserved, but only
@@ -111,6 +115,7 @@ params = dict(
     validation_table = validation_table,
     knowledgebase_file = knowledgebase_file,
     finetune_factor = finetune_factor,
+    unsupervised_finetune = unsupervised_finetune,
     app_to_publish = app_to_publish,
     publication_criteria = publication_criteria,
     epochs = epochs,
