@@ -64,7 +64,7 @@ def calculateSimilarities(embd_vec_1, embd_vec_2):
 
     return similarities
 
-def getRanking(test_set, knowledgebase, filter_column = "module"):
+def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
     out = []
 
     for m in test_set[filter_column].unique():
@@ -214,7 +214,11 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
             total_tests = df_train.shape[0]
 
-            df_train = getRanking(test_set=df_train, knowledgebase=df_kb, filter_column="module")
+            df_train = getRanking(test_set=df_train, 
+                                  knowledgebase=df_kb, 
+                                  filter_column="module",
+                                  max_rank=10)
+
             df_train.drop(columns=["search_embd"], inplace=True)
             del df_kb
             gc.collect()
