@@ -104,7 +104,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
 
         id_column = list(tmp2.columns).index("id")
         sentence_column = list(tmp2.columns).index("sentence")
-        topranking = min(len(tmp2), 1000)
+        topranking = min(len(tmp2), max_rank)
         score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
         values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
 
