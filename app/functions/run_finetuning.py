@@ -55,7 +55,7 @@ def prepare_samples(df):
                     "target_similarity": "float"})
     
                                    
-    dft.dropna(axis=0, how="any", inplace=True)
+    dft.dropna(subset=["search", "target", "target_similarity"], axis=0, how="any", inplace=True)
 
     pos_samples = []
     for (a, t, s) in dft[["search", "target", "target_similarity"]].values:
