@@ -123,21 +123,30 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             articles_above = []
             sentences_above = []
             scores_above = []
+            worse_than_max = True
             for j in range(len(preds)):
                 if str(preds[j]) == str(targets[i]):
                     # takes the highest ranking only, since an article is represented by multiple 
                     # sentences (title, tags, question)
                     targetRanking[i] = j + 1
                     matching_sentence[i] = sents[j]
-                    all_articles_above[i] = ",".join(list(set(articles_above)))
-                    all_sentences_above[i] = "|".join(sentences_above)
+                    all_articles_above[i] = list(set(articles_above))
+                    all_sentences_above[i] = sentences_above
                     all_scores_above[i] = [round(float(s), 2) for s in scores_above]
+                    worse_than_max=False
                     break
                     
                 else:
                    sentences_above.append(str(sents[j])) 
                    articles_above.append(str(preds[j]))
                    scores_above.append(scores[j])
+
+            # if target article has not been found within max_rank top articles,
+            # store all articles found above so far.
+            if worse_than_max:
+                all_articles_above[i] = list(set(articles_above))
+                all_sentences_above[i] = sentences_above
+                all_scores_above[i] = [round(float(s), 2) for s in scores_above]
 
         post["target_ranking"] = targetRanking
         post["all_sentences_above"] = all_sentences_above
