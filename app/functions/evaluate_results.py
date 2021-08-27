@@ -1,6 +1,6 @@
 import logging
 from sentence_transformers import util
-from ..functions.run_baseline import getEmbeddingsCache, calculateSimilarities
+from ..functions.run_baseline import getEmbeddingsCache, calculateSimilarities, getRanking
 import torch
 from datetime import datetime
 from pycarol import Carol, Storage
@@ -41,7 +41,7 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
     sentence2embedding = getEmbeddingsCache(uniq_sentences, tuned_model, model_name="", cache=False)
     target_embd_tuned = [sentence2embedding[s] for s in df_val["target"].values]
     search_embd_tuned = [sentence2embedding[s] for s in df_val["search"].values]
-
+    df_val["search_embd"]  = search_embd_tuned
 
     logger.info(f'Calculating baseline similarities.')
     similarities = calculateSimilarities(target_embd_base, search_embd_base)
@@ -63,6 +63,51 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
     result_tensor = torch.Tensor(df_val["tuned_similarity"].values)
     mse_tuned = loss(target_tensor, result_tensor)
     logger.info(f'Mean Squared Error (MSE) for tuned model: {mse_tuned}.')
+
+
+    if df_kb:
+        logger.info(f'Parsing \"knowledgebase_file\" setting.')
+        
+        login_kb = Carol()
+        kb_list = df_kb.split("/")
+        if len(kb_list) == 4:
+            kb_org, kb_env, kb_app, kb_file = kb_list
+            login_kb.switch_environment(org_name=kb_org, env_name=kb_env, app_name=kb_app)
+        if len(kb_list) == 3:
+            kb_env, kb_app, kb_file = kb_list
+            login_kb.switch_environment(org_name=login_kb.organization, env_name=kb_env, app_name=kb_app)
+        elif len(kb_list) == 2:
+            kb_app, kb_file = kb_list
+            login_kb.app_name = kb_app
+        else:
+            raise "Unable to parse \"knowledgebase_file\" setting. Valid options are: 1. org/env/app/file; 2. env/app/file; 3. app/file."
+
+        logger.info(f'Loading knowledge base from \"{df_kb}\".')
+        stg_kb = Storage(login_kb)
+        df_kb = stg_kb.load(kb_file, format='pickle', cache=False)
+
+        logger.info(f'Updating embeddings on the knowledge base with the fine tuned model.')
+
+        uniq_sentences = list(df_kb["sentence"].unique())
+        sentence2embedding = getEmbeddingsCache(uniq_sentences, tuned_model, model_name="", cache=False)
+        df_kb["sentence_embedding"]  = [sentence2embedding[s] for s in df_kb["sentence"].values]
+
+        logger.info(f'Calculating rankings for the new model.')
+
+        df_val = getRanking(test_set=df_val, 
+                                knowledgebase=df_kb, 
+                                filter_column="module",
+                                max_rank=10)
+
+        total_tests = df_val.shape[0]
+        finetuned_top1 = sum(df_val["target_ranking"] == 1)
+        finetuned_top1_percent = round((finetuned_top1/total_tests) * 100, 2)
+        logger.info(f'Fine tuned accuracy for Top 1: {finetuned_top1} out of {total_tests} ({finetuned_top1_percent}).')
+
+        finetuned_top3 = sum(df_val["target_ranking"] <= 3)
+        finetuned_top3_percent = round((finetuned_top3/total_tests) * 100, 2)
+        logger.info(f'Fine tuned accuracy for Top 3: {finetuned_top3} out of {total_tests} ({finetuned_top3_percent}).')
+
 
     if (mse_tuned < mse_baseline) and (target_app != ""):
         logger.info(f'Tunned model performed better than the baselina. Saving it to target app.')

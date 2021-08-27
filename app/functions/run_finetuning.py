@@ -74,7 +74,7 @@ def save_object_to_storage(obj, filename):
 
     storage.save(filename, obj, format='pickle')
 
-def unsupervised_pretrain_TSDAE(baselinemodel, sentence_list, epochs=10):
+def unsupervised_pretrain_TSDAE(baselinemodel, model_name, sentence_list, epochs=10):
     # Create the special denoising dataset that adds noise on-the-fly
     train_dataset = datasets.DenoisingAutoEncoderDataset(sentence_list)
 
@@ -103,7 +103,7 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretr
     if unsup_pretrain == "TSDAE":
         logger.info(f'Running unsupervised pretraining through TSDAE. Using search and target fields as input text.')
         pretraintext = list(baseline_df["search"].values) + list(baseline_df["target"].values)
-        baseline_model = unsupervised_pretrain_TSDAE(baseline_model, pretraintext, epochs=epchs)
+        baseline_model = unsupervised_pretrain_TSDAE(baseline_model, baseline_name, pretraintext, epochs=epchs)
     
     logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
     baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)

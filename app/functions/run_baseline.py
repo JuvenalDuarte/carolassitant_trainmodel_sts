@@ -249,9 +249,12 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
         logger.info('Preparing positive samples.')
         # Forces the positive sample to be the highest score for the search.
-        pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+        
+        pos_samples["highest_returned_score"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+        pos_samples["baseline_similarity"] = pos_samples[["highest_returned_score", "baseline_similarity"]].max(axis=1)
+
         pos_samples["similarity"] = 1
-        pos_samples.drop(columns="all_scores_above")
+        pos_samples.drop(columns=["all_scores_above", "highest_returned_score"])
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
