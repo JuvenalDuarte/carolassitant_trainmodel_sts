@@ -221,8 +221,6 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
             logger.info(f'Calculating rankings. Articles on knowledge base: \"{df_kb.shape[0]}\".')
 
-            total_tests = df_train.shape[0]
-
             df_train = getRanking(test_set=df_train, 
                                   knowledgebase=df_kb, 
                                   filter_column="module",
@@ -235,6 +233,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
             logger.info(f'Saving rankings for future executions.')
             stg.save("baseline_ranking", df_train, format='pickle')
 
+        total_tests = df_train.shape[0]
         baseline_top1 = sum(df_train["target_ranking"] == 1)
         baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
