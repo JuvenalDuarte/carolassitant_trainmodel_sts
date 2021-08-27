@@ -82,7 +82,12 @@ def unsupervised_pretrain_TSDAE(baselinemodel, model_name, sentence_list, epochs
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
 
     # Use the denoising auto-encoder loss
-    train_loss = losses.DenoisingAutoEncoderLoss(baselinemodel, decoder_name_or_path=model_name, tie_encoder_decoder=True)
+    if model_name == "LaBSE":
+        decoder_name = model_name
+    else:
+        decoder_name = 'bert-base-uncased'
+
+    train_loss = losses.DenoisingAutoEncoderLoss(baselinemodel, decoder_name_or_path=decoder_name, tie_encoder_decoder=True)
 
     # Call the fit method
     baselinemodel.fit(
