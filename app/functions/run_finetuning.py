@@ -50,15 +50,15 @@ def applyBump(row, bump):
 
 # Transforms records into sample layout required for STS training
 def prepare_samples(df):
-    dft = df.astype({"sentence1": "str",
-                    "sentence2": "str",
+    dft = df.astype({"search": "str",
+                    "target": "str",
                     "target_similarity": "float"})
     
                                    
     dft.dropna(axis=0, how="any", inplace=True)
 
     pos_samples = []
-    for (a, t, s) in dft[["sentence1", "sentence2", "target_similarity"]].values:
+    for (a, t, s) in dft[["search", "target", "target_similarity"]].values:
         pos_samples.append(InputExample(texts=[a, t], label=s))
 
     return pos_samples
