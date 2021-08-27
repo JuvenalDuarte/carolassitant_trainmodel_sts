@@ -252,7 +252,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         pos_samples["baseline_similarity"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
         pos_samples["similarity"] = 1
         pos_samples.drop(columns="all_scores_above")
-        pos_samples.dropna(inplace=True)
+        pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
@@ -273,13 +273,13 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         del neg_samples_p1
         gc.collect()
 
-        neg_samples.dropna(inplace=True)
-        logger.info(f'Total negative samples: {neg_samples.shape[0]}.')
-
         neg_samples["target"] = neg_samples["all_sentences_above"]
         neg_samples["baseline_similarity"] = neg_samples["all_scores_above"]
         neg_samples["similarity"] = 0
         neg_samples.drop(columns=["all_sentences_above","all_scores_above"])
+
+        neg_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
+        logger.info(f'Total negative samples: {neg_samples.shape[0]}.')
 
         logger.info('Concatenating positive and negative samples.')
         df_train = pd.concat([pos_samples, neg_samples], ignore_index=True)

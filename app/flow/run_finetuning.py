@@ -29,7 +29,7 @@ class RunFineTuning(Task):
                                      baseline_name=self.baseline, 
                                      baseline_df=train_baseline, 
                                      bump=self.finetune_factor, 
-                                     unsup_pretrain_=self.unsupervised_finetune, 
+                                     unsup_pretrain=self.unsupervised_finetune, 
                                      epchs=self.epochs, 
                                      bsize=self.batchsize)
 
