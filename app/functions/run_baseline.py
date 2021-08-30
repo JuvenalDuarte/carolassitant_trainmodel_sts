@@ -243,17 +243,18 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
         df_train = df_train[df_train["target_ranking"] > 3]
-        pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
+        #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
+        pos_samples = df_train[["search", "target", "baseline_similarity"]].copy()
         neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
 
         logger.info('Preparing positive samples.')
         # Forces the positive sample to be the highest score for the search.
         
-        pos_samples["highest_returned_score"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
-        pos_samples["baseline_similarity"] = pos_samples[["highest_returned_score", "baseline_similarity"]].max(axis=1)
+        #pos_samples["highest_returned_score"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+        #pos_samples["baseline_similarity"] = pos_samples[["highest_returned_score", "baseline_similarity"]].max(axis=1)
 
         pos_samples["similarity"] = 1
-        pos_samples.drop(columns=["all_scores_above", "highest_returned_score"])
+        #pos_samples.drop(columns=["all_scores_above", "highest_returned_score"])
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
