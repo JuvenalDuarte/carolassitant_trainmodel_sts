@@ -104,7 +104,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
 
         id_column = list(tmp2.columns).index("id")
         sentence_column = list(tmp2.columns).index("sentence")
-        topranking = min(len(tmp2), max_rank)
+        topranking = len(tmp2)
         score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
         values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
 
@@ -123,7 +123,6 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             articles_above = []
             sentences_above = []
             scores_above = []
-            worse_than_max = True
             for j in range(len(preds)):
                 if str(preds[j]) == str(targets[i]):
                     # takes the highest ranking only, since an article is represented by multiple 
@@ -133,20 +132,13 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
                     all_articles_above[i] = list(set(articles_above))
                     all_sentences_above[i] = sentences_above
                     all_scores_above[i] = [round(float(s), 2) for s in scores_above]
-                    worse_than_max=False
                     break
                     
-                else:
+                # Stop adding articles above to save memory
+                elif(len(sentences_above) < max_rank):
                    sentences_above.append(str(sents[j])) 
                    articles_above.append(str(preds[j]))
                    scores_above.append(scores[j])
-
-            # if target article has not been found within max_rank top articles,
-            # store all articles found above so far.
-            if worse_than_max:
-                all_articles_above[i] = list(set(articles_above))
-                all_sentences_above[i] = sentences_above
-                all_scores_above[i] = [round(float(s), 2) for s in scores_above]
 
         post["target_ranking"] = targetRanking
         post["all_sentences_above"] = all_sentences_above
@@ -244,18 +236,18 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
         df_train = df_train[df_train["target_ranking"] > 3]
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
-        pos_samples = df_train[["search", "target", "baseline_similarity"]].copy()
+        pos_samples = df_train[["search", "target", "baseline_similarity", "matching_sentence"]].copy()
         neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
 
         logger.info('Preparing positive samples.')
         # Forces the positive sample to be the highest score for the search.
-        
-        #pos_samples["highest_returned_score"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
-        #pos_samples["baseline_similarity"] = pos_samples[["highest_returned_score", "baseline_similarity"]].max(axis=1)
+        pos_samples["highest_returned_score"] = pos_samples["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+        pos_samples["baseline_similarity"] = pos_samples[["highest_returned_score", "baseline_similarity"]].max(axis=1)
 
         pos_samples["similarity"] = 1
-        #pos_samples.drop(columns=["all_scores_above", "highest_returned_score"])
+        pos_samples["target"] = pos_samples["matching_sentence"]
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
+        neg_samples.drop(columns=["matching_sentence"], inplace=True)
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
@@ -279,7 +271,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         neg_samples["target"] = neg_samples["all_sentences_above"]
         neg_samples["baseline_similarity"] = neg_samples["all_scores_above"]
         neg_samples["similarity"] = 0
-        neg_samples.drop(columns=["all_sentences_above","all_scores_above"])
+        neg_samples.drop(columns=["all_sentences_above","all_scores_above"], inplace=True)
 
         neg_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         logger.info(f'Total negative samples: {neg_samples.shape[0]}.')
