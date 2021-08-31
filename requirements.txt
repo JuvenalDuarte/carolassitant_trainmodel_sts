@@ -6,3 +6,4 @@ torch
 torchvision
 sentencepiece==0.1.92
 sentence-transformers
+nltk

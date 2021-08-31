@@ -75,6 +75,9 @@ def save_object_to_storage(obj, filename):
     storage.save(filename, obj, format='pickle')
 
 def unsupervised_pretrain_TSDAE(baselinemodel, model_name, sentence_list, epochs=10):
+    import nltk
+    nltk.download('punkt')
+    
     # Create the special denoising dataset that adds noise on-the-fly
     train_dataset = datasets.DenoisingAutoEncoderDataset(sentence_list)
 
