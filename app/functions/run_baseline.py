@@ -124,7 +124,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             msg_embd_tensor = torch.stack(torch_l1, dim=0)
             
             # High enough to find the target
-            topranking = 10000
+            topranking = len(tmp2)
             score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
             values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
 
