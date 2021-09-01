@@ -127,9 +127,9 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
                 if str(preds[j]) == str(targets[i]):
                     # takes the highest ranking only, since an article is represented by multiple 
                     # sentences (title, tags, question)
-                    targetRanking[i] = j + 1
-                    matching_sentence[i] = sents[j]
                     all_articles_above[i] = list(set(articles_above))
+                    targetRanking[i] = len(all_articles_above[i]) + 1
+                    matching_sentence[i] = sents[j]
                     all_sentences_above[i] = sentences_above
                     all_scores_above[i] = [round(float(s), 2) for s in scores_above]
                     break
