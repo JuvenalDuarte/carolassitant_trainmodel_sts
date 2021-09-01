@@ -73,15 +73,26 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
         tmp2 = knowledgebase[knowledgebase[filter_column] == m].copy()
 
         narticles = tmp2["id"].nunique()
+        articlesOnMod = list(tmp2["id"].unique())
+        articlesOnMod = [str(a) for a in articlesOnMod]
 
-        logger.info(f"INFO* Searching \"{len(tmp1)}\" messages within \"{narticles}\" articles for module {m}.")
-
-        if len(tmp1) < 1 and (math.isnan(m) or m is None):
-            logger.warn(f"WARN* Module not define \"{m}\". Searching through all articles.")
-            continue
+        logger.info(f"Searching \"{len(tmp1)}\" messages within \"{narticles}\" articles for module {m}.")
 
         if len(tmp2) < 1:
-            logger.warn(f"WARN* Module {m} not found on articles.")
+            logger.warn(f"Module {m} not found on articles.")
+            continue
+
+        logger.info(f"Validating the expected articles are available on module {m}.")
+        tmp1["available_on_kb"] = tmp1["article_id"].apply(lambda x: True if str(x) in articlesOnMod else False)
+        not_avail = tmp1[~tmp1["available_on_kb"]]
+
+        if (len(not_avail) > 0):
+            na_art = list(not_avail["article_id"].unique())
+            logger.warn(f"The following expected articles are not available on knowledge base under {m}: {na_art}.")
+
+        tmp1 = tmp1[tmp1["available_on_kb"]]
+        if len(tmp1) < 1 and (math.isnan(m) or m is None):
+            logger.warn(f"Could not find any sample for \"{m}\". Discarding samples.")
             continue
 
         targets = list(tmp1["article_id"].values)
@@ -104,7 +115,9 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
 
         id_column = list(tmp2.columns).index("id")
         sentence_column = list(tmp2.columns).index("sentence")
-        topranking = len(tmp2)
+        
+        # High enough to find the target
+        topranking = 50000
         score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
         values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
 
