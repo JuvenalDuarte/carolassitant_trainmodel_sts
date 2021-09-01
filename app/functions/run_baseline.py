@@ -95,71 +95,78 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             logger.warn(f"Could not find any sample for \"{m}\". Discarding samples.")
             continue
 
-        targets = list(tmp1["article_id"].values)
+        if len(tmp1) > 5000:
+            tsearches = len(tmp1)
+            logger.warn(f"Too many searches on the module {m}: \"{tsearches}\". Breaking down the process to avoid Out of Memory error.")
 
-        post = tmp1.copy()
-        targetRanking = [9999] * len(post)
-
-        all_scores_above = [np.nan] * len(post)
-        all_sentences_above = [""] * len(post)
-        all_articles_above = [""] * len(post)
-        matching_sentence = [""] * len(post)
-
-        f1 = "search_embd"
-        torch_l1 = [torch.from_numpy(v) for v in tmp1[f1].values]
-        msg_embd_tensor = torch.stack(torch_l1, dim=0)
-        
         f2 = "sentence_embedding"
         torch_l2 = [torch.from_numpy(v) for v in tmp2[f2].values]
         doc_embd_tensor = torch.stack(torch_l2, dim=0)
 
         id_column = list(tmp2.columns).index("id")
         sentence_column = list(tmp2.columns).index("sentence")
-        
-        # High enough to find the target
-        topranking = 50000
-        score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
-        values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
+            
+        max_reg_per_round = 5000
+        nrounds = round(len(tmp1)/max_reg_per_round, 0)
+        for dft in np.array_split(tmp1, nrounds):
 
-        for i in range(len(idx_rank)):
-            preds = tmp2.iloc[idx_rank[i, :].tolist(), id_column]
-            sents = tmp2.iloc[idx_rank[i, :].tolist(), sentence_column]
-            scores = values_rank[i, :]
+            targets = list(dft["article_id"].values)
+            post = dft.copy()
+            targetRanking = [9999] * len(post)
 
-            if np.isscalar(preds):
-                preds = [preds]
-                sents = [sents]
-            else:
-                preds = list(preds.values)
-                sents = list(sents.values)
+            all_scores_above = [np.nan] * len(post)
+            all_sentences_above = [""] * len(post)
+            all_articles_above = [""] * len(post)
+            matching_sentence = [""] * len(post)
 
-            articles_above = []
-            sentences_above = []
-            scores_above = []
-            for j in range(len(preds)):
-                if str(preds[j]) == str(targets[i]):
-                    # takes the highest ranking only, since an article is represented by multiple 
-                    # sentences (title, tags, question)
-                    all_articles_above[i] = list(set(articles_above))
-                    targetRanking[i] = len(all_articles_above[i]) + 1
-                    matching_sentence[i] = sents[j]
-                    all_sentences_above[i] = sentences_above
-                    all_scores_above[i] = [round(float(s), 2) for s in scores_above]
-                    break
-                    
-                # Stop adding articles above to save memory
-                elif(len(sentences_above) < max_rank):
-                   sentences_above.append(str(sents[j])) 
-                   articles_above.append(str(preds[j]))
-                   scores_above.append(scores[j])
+            f1 = "search_embd"
+            torch_l1 = [torch.from_numpy(v) for v in dft[f1].values]
+            msg_embd_tensor = torch.stack(torch_l1, dim=0)
+            
+            # High enough to find the target
+            topranking = 10000
+            score = util.pytorch_cos_sim(msg_embd_tensor, doc_embd_tensor)
+            values_rank, idx_rank = torch.topk(score, k=topranking, dim=1, sorted=True)
 
-        post["target_ranking"] = targetRanking
-        post["all_sentences_above"] = all_sentences_above
-        post["all_articles_above"] = all_articles_above
-        post["all_scores_above"] = all_scores_above
-        post["matching_sentence"] = matching_sentence
+            for i in range(len(idx_rank)):
+                preds = tmp2.iloc[idx_rank[i, :].tolist(), id_column]
+                sents = tmp2.iloc[idx_rank[i, :].tolist(), sentence_column]
+                scores = values_rank[i, :]
 
-        out.append(post)
+                if np.isscalar(preds):
+                    preds = [preds]
+                    sents = [sents]
+                else:
+                    preds = list(preds.values)
+                    sents = list(sents.values)
+
+                articles_above = []
+                sentences_above = []
+                scores_above = []
+                for j in range(len(preds)):
+                    if str(preds[j]) == str(targets[i]):
+                        # takes the highest ranking only, since an article is represented by multiple 
+                        # sentences (title, tags, question)
+                        all_articles_above[i] = list(set(articles_above))
+                        targetRanking[i] = len(all_articles_above[i]) + 1
+                        matching_sentence[i] = sents[j]
+                        all_sentences_above[i] = sentences_above
+                        all_scores_above[i] = [round(float(s), 2) for s in scores_above]
+                        break
+                        
+                    # Stop adding articles above to save memory
+                    elif(len(sentences_above) < max_rank):
+                        sentences_above.append(str(sents[j])) 
+                        articles_above.append(str(preds[j]))
+                        scores_above.append(scores[j])
+
+            post["target_ranking"] = targetRanking
+            post["all_sentences_above"] = all_sentences_above
+            post["all_articles_above"] = all_articles_above
+            post["all_scores_above"] = all_scores_above
+            post["matching_sentence"] = matching_sentence
+
+            out.append(post)
 
     df4 = pd.concat(out)
         
