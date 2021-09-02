@@ -107,7 +107,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
         sentence_column = list(tmp2.columns).index("sentence")
             
         max_reg_per_round = 5000
-        nrounds = round(len(tmp1)/max_reg_per_round, 0)
+        nrounds = max(1, round(len(tmp1)/max_reg_per_round, 0))
         for dft in np.array_split(tmp1, nrounds):
 
             targets = list(dft["article_id"].values)
