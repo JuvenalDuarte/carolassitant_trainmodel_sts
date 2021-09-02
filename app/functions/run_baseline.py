@@ -267,7 +267,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         pos_samples["similarity"] = 1
         pos_samples["target"] = pos_samples["matching_sentence"]
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
-        neg_samples.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
+        pos_samples.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
