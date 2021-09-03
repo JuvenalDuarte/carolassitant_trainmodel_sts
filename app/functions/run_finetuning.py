@@ -117,6 +117,11 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretr
     logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
     baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)
 
+    logger.info(f'Saving training data for reference.')
+    login = Carol()
+    stg = Storage(login)
+    stg.save("training_samples", baseline_df, format='pickle')
+
     logger.info(f'Preparing the dataset.')
     samples_df = prepare_samples(baseline_df)
 
