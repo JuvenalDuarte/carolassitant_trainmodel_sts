@@ -19,6 +19,7 @@ class RunFineTuning(Task):
     unsupervised_finetune = luigi.FloatParameter()
     epochs = luigi.IntParameter()
     batchsize = luigi.IntParameter()
+    freezelayers = luigi.IntParameter()
     datetime = luigi.Parameter() 
     
     def easy_run(self, inputs):
@@ -31,6 +32,7 @@ class RunFineTuning(Task):
                                      bump=self.finetune_factor, 
                                      unsup_pretrain=self.unsupervised_finetune, 
                                      epchs=self.epochs, 
-                                     bsize=self.batchsize)
+                                     bsize=self.batchsize,
+                                     freezelayers=self.freezelayers)
 
         return tuned_model

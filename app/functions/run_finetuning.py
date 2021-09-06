@@ -18,10 +18,9 @@ def count_parameters(model):
 '''
 Freezes all layers in the model except for the output dense layer.
 '''
-def freeze_layers(model):
+def freeze_layers(model, freeze_till = 0):
     trainable_previous = count_parameters(model)
     current_layer = 0
-    freeze_till = 0
     
     for child in model.children():
         if (current_layer <= freeze_till):
@@ -61,7 +60,7 @@ def prepare_samples(df):
     for (a, t, s) in dft[["search", "target", "target_similarity"]].values:
         pos_samples.append(InputExample(texts=[a, t], label=s))
 
-    return pos_samples
+    return pos_samples  
 
 def save_object_to_storage(obj, filename):
     login = Carol()
@@ -105,7 +104,7 @@ def unsupervised_pretrain_TSDAE(baselinemodel, model_name, sentence_list, epochs
 
     return baselinemodel
 
-def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretrain, epchs = 10, bsize = 90):
+def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretrain, epchs = 10, bsize = 90, freezelayers = -1):
 
     logger.info(f'3. Running fine tuning.')
 
@@ -130,8 +129,9 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretr
     logger.info(f'Shuffling training data.')
     random.shuffle(samples_df)
 
-    #logger.info(f'Freezing layers.')
-    #freeze_layers(model)
+    if freezelayers > 0:
+        logger.info(f'Freezing layers.')
+        freeze_layers(baseline_model, freeze_till=freezelayers)
 
     logger.info(f'Preparing batches. Batch size={bsize}.')
     train_dataloader = DataLoader(samples_df, shuffle=True, batch_size=bsize)

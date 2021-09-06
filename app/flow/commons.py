@@ -71,6 +71,9 @@ epochs = _settings.get('finetune_epochs')
 # but may lead to memory overflow.
 batchsize = _settings.get('finetune_batchsize')
 
+# Will freeze the first N layers, as defined in this parameter.
+freezelayers = _settings.get('finetune_freezelayers')
+
 # After fine tuning the model will be deployed to the app defined below, if the
 # criteria is accepted. If list, model will be published to each of the apps
 app_to_publish = _settings.get('app_to_publish')
@@ -115,6 +118,7 @@ params = dict(
     validation_table = validation_table,
     knowledgebase_file = knowledgebase_file,
     finetune_factor = finetune_factor,
+    freezelayers = freezelayers,
     unsupervised_finetune = unsupervised_finetune,
     app_to_publish = app_to_publish,
     publication_criteria = publication_criteria,
