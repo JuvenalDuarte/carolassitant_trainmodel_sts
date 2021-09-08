@@ -1,4 +1,5 @@
 pandas==1.2.5
+gunicorn
 pycarol[complete]
 python-dotenv
 python-json-logger
