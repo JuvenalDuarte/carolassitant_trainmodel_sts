@@ -194,6 +194,9 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         df_train["baseline_similarity"] = similarities
         del similarities
         del target_embd
+    else:
+        df_train["baseline_similarity"] = -1
+        df_train["target"] = ""
 
     del sentence2embedding
     del search_embd
