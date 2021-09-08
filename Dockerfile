@@ -3,6 +3,8 @@ FROM totvslabs/pycarol:2.40.0
 RUN mkdir /app
 WORKDIR /app
 ADD requirements.txt /app/
+
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 ADD . /app
