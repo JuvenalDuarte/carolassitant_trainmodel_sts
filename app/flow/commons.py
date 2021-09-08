@@ -54,7 +54,7 @@ knowledgebase_file = _settings.get('knowledgebase_file')
 
 
 # TODO.
-unsupervised_finetune = _settings.get('unsupervised_finetune')
+selfsupervised_pretrain = _settings.get('selfsupervised_pretrain')
 
 # This factor determines how agressive should the fine tunning/ domain adaptation be.
 # If the factor is close to 1 then there's a high chance the pretrained model will fully 
@@ -119,7 +119,7 @@ params = dict(
     knowledgebase_file = knowledgebase_file,
     finetune_factor = finetune_factor,
     freezelayers = freezelayers,
-    unsupervised_finetune = unsupervised_finetune,
+    selfsupervised_pretrain = selfsupervised_pretrain,
     app_to_publish = app_to_publish,
     publication_criteria = publication_criteria,
     epochs = epochs,

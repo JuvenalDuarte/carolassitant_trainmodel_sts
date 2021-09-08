@@ -16,7 +16,7 @@ luigi.auto_namespace(scope=__name__)
 class RunFineTuning(Task):
     baseline = luigi.Parameter() 
     finetune_factor = luigi.FloatParameter()
-    unsupervised_finetune = luigi.FloatParameter()
+    selfsupervised_pretrain = luigi.FloatParameter()
     epochs = luigi.IntParameter()
     batchsize = luigi.IntParameter()
     freezelayers = luigi.IntParameter()
@@ -30,7 +30,7 @@ class RunFineTuning(Task):
                                      baseline_name=self.baseline, 
                                      baseline_df=train_baseline, 
                                      bump=self.finetune_factor, 
-                                     unsup_pretrain=self.unsupervised_finetune, 
+                                     unsup_pretrain=self.selfsupervised_pretrain, 
                                      epchs=self.epochs, 
                                      bsize=self.batchsize,
                                      freezelayers=self.freezelayers)
