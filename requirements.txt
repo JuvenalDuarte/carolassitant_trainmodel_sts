@@ -1,3 +1,4 @@
+pandas==1.2.5
 pycarol[complete]
 python-dotenv
 python-json-logger
