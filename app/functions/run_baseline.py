@@ -176,25 +176,26 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
     logger.info(f'2. Running baseline evaluation.')
 
-    uniq_sentences = list(df_train["target"].unique())
-    uniq_sentences = uniq_sentences + list(df_train["search"].unique())
+    uniq_sentences = list(df_train["search"].unique())
+    if not df_kb: uniq_sentences = uniq_sentences + list(df_train["target"].unique())
     uniq_sentences = list(set(uniq_sentences))
     total = len(uniq_sentences)
     logger.info(f'Calculating embeddings for {total} unique sentences on training set.')
     sentence2embedding = getEmbeddingsCache(uniq_sentences, model, model_name, cache=True)
 
     logger.info(f'Translating sentences to embeddings.')
-    target_embd = [sentence2embedding[s] for s in df_train["target"].values]
     search_embd = [sentence2embedding[s] for s in df_train["search"].values]
+    if not df_kb: target_embd = [sentence2embedding[s] for s in df_train["target"].values]
     df_train["search_embd"] = search_embd
 
     logger.info(f'Calculating baseline similarities.')
-    similarities = calculateSimilarities(target_embd, search_embd)
-    df_train["baseline_similarity"] = similarities
+    if not df_kb: 
+        similarities = calculateSimilarities(target_embd, search_embd)
+        df_train["baseline_similarity"] = similarities
+        del similarities
+        del target_embd
 
     del sentence2embedding
-    del similarities
-    del target_embd
     del search_embd
     gc.collect()
 
