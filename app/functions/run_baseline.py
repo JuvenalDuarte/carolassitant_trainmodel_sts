@@ -99,7 +99,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             tsearches = len(tmp1)
             logger.warn(f"Too many searches on the module {m}: \"{tsearches}\". Breaking down the process to avoid Out of Memory error.")
 
-        f2 = "sentence_embedding"
+        f2 = next(c for c in tmp2.columns if "embedding" in c)
         torch_l2 = [torch.from_numpy(v) for v in tmp2[f2].values]
         doc_embd_tensor = torch.stack(torch_l2, dim=0)
 
