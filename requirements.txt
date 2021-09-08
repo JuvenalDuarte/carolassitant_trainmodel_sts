@@ -2,7 +2,6 @@ pandas==1.2.5
 pycarol[complete]
 python-dotenv
 python-json-logger
-pandas
 torch
 torchvision
 sentencepiece==0.1.92
