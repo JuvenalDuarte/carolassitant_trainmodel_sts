@@ -172,7 +172,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
         
     return df4
 
-def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
+def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat):
 
     logger.info(f'2. Running baseline evaluation.')
 
@@ -258,7 +258,38 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
-        df_train = df_train[df_train["target_ranking"] > 3]
+
+        if train_strat.lower() == ">5":
+            logger.info('Fine tuning model on records ranked greater than 5.')
+            df_train = df_train[df_train["target_ranking"] > 5]
+
+        elif train_strat.lower() == ">3":
+            logger.info('Fine tuning model on records ranked greater than 3.')
+            df_train = df_train[df_train["target_ranking"] > 3]
+
+        elif train_strat.lower() == ">1":
+            logger.info('Fine tuning model on records ranked greater than 1.')
+            df_train = df_train[df_train["target_ranking"] > 1]
+
+        else:
+            train_strat = "all"
+            logger.info('Fine tuning model on all records.')
+
+            # This case is essentially equals to ">1", but records where the model correctly
+            # predicted the expected article will be used as positive examples to reinforce
+            # and adjust attention heads.
+            df_train = df_train[df_train["target_ranking"] > 1]
+            df_onlypos = df_train[df_train["target_ranking"] <= 1]
+
+            df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()    
+
+            df_onlypos["baseline_similarity"] = df_onlypos["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+            df_onlypos["similarity"] = 1
+            df_onlypos["target"] = df_onlypos["matching_sentence"]
+            df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
+            df_onlypos.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
+
+
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
         pos_samples = df_train[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()
         neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
@@ -272,6 +303,10 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
         pos_samples["target"] = pos_samples["matching_sentence"]
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         pos_samples.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
+
+        if train_strat == "all":
+            pos_samples = pd.concat([pos_samples, df_onlypos], ignore_index=True)
+            
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')

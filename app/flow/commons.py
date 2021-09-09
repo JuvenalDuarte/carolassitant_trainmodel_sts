@@ -52,6 +52,8 @@ validation_table = _settings.get('validation_pairs_table')
 # TODO.
 knowledgebase_file = _settings.get('knowledgebase_file')
 
+# TODO.
+ranking_train_strategy = _settings.get('ranking_train_strategy')
 
 # TODO.
 selfsupervised_pretrain = _settings.get('selfsupervised_pretrain')
@@ -117,6 +119,7 @@ params = dict(
     training_mapping = training_mapping,
     validation_table = validation_table,
     knowledgebase_file = knowledgebase_file,
+    ranking_train_strategy = ranking_train_strategy,
     finetune_factor = finetune_factor,
     freezelayers = freezelayers,
     selfsupervised_pretrain = selfsupervised_pretrain,

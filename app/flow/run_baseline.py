@@ -19,6 +19,7 @@ class RunBaseline(Task):
     datetime = luigi.Parameter()
     baseline = luigi.Parameter()
     reuse_ranking = luigi.Parameter()
+    ranking_train_strategy = luigi.Parameter()
     knowledgebase_file = luigi.Parameter()
     
     #target_type = PickleTarget
@@ -32,6 +33,7 @@ class RunBaseline(Task):
                                model_name=self.baseline,
                                df_train=train, 
                                df_kb=self.knowledgebase_file,
-                               reuse_ranking=self.reuse_ranking)
+                               reuse_ranking=self.reuse_ranking,
+                               train_strat=self.ranking_train_strategy)
 
         return base_df
