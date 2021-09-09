@@ -260,7 +260,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking):
 
         df_train = df_train[df_train["target_ranking"] > 3]
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
-        pos_samples = df_train[["search", "target", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()
+        pos_samples = df_train[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()
         neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
 
         logger.info('Preparing positive samples.')
