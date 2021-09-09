@@ -118,6 +118,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             all_sentences_above = [""] * len(post)
             all_articles_above = [""] * len(post)
             matching_sentence = [""] * len(post)
+            matching_score = [np.nan] * len(post)
 
             f1 = "search_embd"
             torch_l1 = [torch.from_numpy(v) for v in dft[f1].values]
@@ -150,6 +151,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
                         all_articles_above[i] = list(set(articles_above))
                         targetRanking[i] = len(all_articles_above[i]) + 1
                         matching_sentence[i] = sents[j]
+                        matching_score[i] = scores[j]
                         all_sentences_above[i] = sentences_above
                         all_scores_above[i] = [round(float(s), 2) for s in scores_above]
                         break
@@ -165,6 +167,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
             post["all_articles_above"] = all_articles_above
             post["all_scores_above"] = all_scores_above
             post["matching_sentence"] = matching_sentence
+            post["matching_score"] = matching_score
 
             out.append(post)
 
@@ -281,13 +284,15 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             df_train = df_train[df_train["target_ranking"] > 1]
             df_onlypos = df_train[df_train["target_ranking"] <= 1]
 
-            df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()    
+            df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    
 
-            df_onlypos["baseline_similarity"] = df_onlypos["all_scores_above"].apply(lambda x: x[0] if type(x) is list else np.nan)
+            df_onlypos["baseline_similarity"] = df_onlypos["matching_score"]
             df_onlypos["similarity"] = 1
             df_onlypos["target"] = df_onlypos["matching_sentence"]
             df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
-            df_onlypos.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
+            df_onlypos.drop(columns=["matching_sentence","matching_score"], inplace=True)
+
+            logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
 
 
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
@@ -306,7 +311,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
 
         if train_strat == "all":
             pos_samples = pd.concat([pos_samples, df_onlypos], ignore_index=True)
-            
+
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
         logger.info('Preparing negative samples.')
