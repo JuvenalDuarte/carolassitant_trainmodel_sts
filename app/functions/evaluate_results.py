@@ -21,7 +21,7 @@ def save_model_to_onlineapp(obj, targetapp, filename):
 
     storage.save(filename, obj, format='pickle')
 
-def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val, df_kb):
+def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val, df_kb, acc_bas):
 
     logger.info(f'4. Evaluating performance.')
 
@@ -64,6 +64,9 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
         result_tensor = torch.Tensor(df_val["tuned_similarity"].values)
         mse_tuned = loss(target_tensor, result_tensor)
         logger.info(f'Mean Squared Error (MSE) for tuned model: {mse_tuned}.')
+
+        better_mse = (mse_tuned > mse_baseline)
+        better_acc = False
     
     else:
 
@@ -119,9 +122,14 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
         finetuned_top3_percent = round((finetuned_top3/total_tests) * 100, 2)
         logger.info(f'Fine tuned accuracy for Top 3: {finetuned_top3} out of {total_tests} ({finetuned_top3_percent}).')
 
+        acc_fnt = {"top1":finetuned_top1_percent, 
+                   "top3":finetuned_top3_percent}
 
-    if (target_app != ""):
-        logger.info(f'Tunned model performed better than the baselina. Saving it to target app.')
+        better_acc = (acc_fnt["top1"] > acc_bas["top1"]) and (acc_fnt["top3"] > acc_bas["top3"])
+        better_mse = False
+
+    if (target_app != "") and (better_acc or better_mse):
+        logger.info(f'Tunned model performed better than the baseline. Saving it to target app.')
 
         # Sends the model back to the CPU to asure compatibility with other apps
         tuned_model.to('cpu')

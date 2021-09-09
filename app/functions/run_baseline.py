@@ -205,6 +205,8 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
     del search_embd
     gc.collect()
 
+    baseline_top1_percent = None
+    baseline_top3_percent = None
     if df_kb:
 
         login = Carol()
@@ -344,4 +346,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
         df_train = pd.concat([pos_samples, neg_samples], ignore_index=True)
 
     logger.info(f'Baseline evaluation finished.')
-    return df_train
+    baseline_acc = {"top1":baseline_top1_percent, 
+                    "top3":baseline_top3_percent}
+                    
+    return df_train, baseline_acc

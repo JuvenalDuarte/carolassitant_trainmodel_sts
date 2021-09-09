@@ -24,7 +24,7 @@ class RunFineTuning(Task):
     
     def easy_run(self, inputs):
         model = inputs[0]
-        train_baseline = inputs[1]
+        train_baseline, acc = inputs[1]
 
         tuned_model = run_finetuning(baseline_model=model, 
                                      baseline_name=self.baseline, 
