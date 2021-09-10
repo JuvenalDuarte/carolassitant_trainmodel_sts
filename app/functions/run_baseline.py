@@ -48,7 +48,7 @@ def getEmbeddingsCache(uniq_sentences, model, model_name, cache=True):
         logger.info('All sentences already present on cache, no calculation needed.')
 
     if cache:
-        storage.save(filename, sent2embd, format='pickle')
+        storage.save(filename, sent2embd, format='pickle', cache=False)
     
     return sent2embd
 
@@ -252,7 +252,9 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             gc.collect()
 
             logger.info(f'Saving rankings for future executions.')
-            stg.save("baseline_ranking", df_train, format='pickle')
+            login = Carol()
+            stg = Storage(login)
+            stg.save("baseline_ranking", df_train, format='pickle', cache=False)
 
         total_tests = df_train.shape[0]
         baseline_top1 = sum(df_train["target_ranking"] == 1)
