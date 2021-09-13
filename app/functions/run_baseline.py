@@ -207,6 +207,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
 
     baseline_top1_percent = None
     baseline_top3_percent = None
+    reuse_ranking = False
     if df_kb:
 
         login = Carol()
@@ -251,10 +252,10 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             del df_kb
             gc.collect()
 
-            logger.info(f'Saving rankings for future executions.')
-            login = Carol()
-            stg = Storage(login)
-            stg.save("baseline_ranking", df_train, format='pickle', cache=False)
+            #logger.info(f'Saving rankings for future executions.')
+            #login = Carol()
+            #stg = Storage(login)
+            #stg.save("baseline_ranking", df_train, format='pickle', cache=False)
 
         total_tests = df_train.shape[0]
         baseline_top1 = sum(df_train["target_ranking"] == 1)

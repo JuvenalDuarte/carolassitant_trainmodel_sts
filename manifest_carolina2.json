@@ -1,0 +1,41 @@
+{
+  "batch": {
+    "processes": [
+      {
+        "name": "trainnlpstsmodel",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Train NLP STS Model",
+          "en-US": "Train NLP STS Model"
+        },
+        "algorithmDescription": {
+          "pt-br": "Train NLP STS Model",
+          "en-US": "Train NLP STS Model"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerImage": "trainnlpmodel/trainnlpstsmodel:1.0.0",
+            "instanceType": "g1.v100.large"
+          },
+          "environments": {
+            "ENV": "PROD",
+            "LOCALSCHEDULER": "True"
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "trainnlpstsmodel",
+      "dockerTag": "1.0.0",
+      "gitBranch": "main",
+      "gitPath": "/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/JuvenalDuarte/carolassitant_trainmodel_sts"
+    }
+  ]
+}
