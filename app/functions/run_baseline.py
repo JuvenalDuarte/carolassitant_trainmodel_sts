@@ -177,7 +177,7 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
 
 def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat, ranking_threshold):
     if ranking_threshold in [np.nan, None, ""]:
-        ranking_threshold = 0
+        ranking_threshold = -1
 
     logger.info(f'2. Running baseline evaluation.')
 
@@ -271,15 +271,19 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
 
         if train_strat.lower() == ">5":
             logger.info('Fine tuning model on records ranked greater than 5 or below threshold.')
-            df_train = df_train[(df_train["target_ranking"] > 5) | (df_train["matching_score"] < ranking_threshold)]
+
+            df_onlypos = df_train[(df_train["target_ranking"] <= 5) & (df_train["matching_score"] < ranking_threshold)]
+            df_train = df_train[df_train["target_ranking"] > 5]
 
         elif train_strat.lower() == ">3":
             logger.info('Fine tuning model on records ranked greater than 3 or below threshold.')
-            df_train = df_train[(df_train["target_ranking"] > 3) | (df_train["matching_score"] < ranking_threshold)]
+            df_onlypos = df_train[(df_train["target_ranking"] <= 3) & (df_train["matching_score"] < ranking_threshold)]
+            df_train = df_train[df_train["target_ranking"] > 3]
 
         elif train_strat.lower() == ">1":
             logger.info('Fine tuning model on records ranked greater than 1 or below threshold.')
-            df_train = df_train[(df_train["target_ranking"] > 1) | (df_train["matching_score"] < ranking_threshold)]
+            df_onlypos = df_train[(df_train["target_ranking"] == 1) & (df_train["matching_score"] < ranking_threshold)]
+            df_train = df_train[df_train["target_ranking"] > 1]
 
         else:
             train_strat = "all"
@@ -288,18 +292,17 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
             # This case is essentially equals to ">1", but records where the model correctly
             # predicted the expected article will be used as positive examples to reinforce
             # and adjust attention heads.
-            df_onlypos = df_train[(df_train["target_ranking"] == 1) & (df_train["matching_score"] > ranking_threshold)]
-            df_train = df_train[(df_train["target_ranking"] > 1) | (df_train["matching_score"] < ranking_threshold)]
+            df_onlypos = df_train[df_train["target_ranking"] == 1]
+            df_train = df_train[df_train["target_ranking"] > 1]
 
-            logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
-            df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    
+        logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
+        df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    
 
-            df_onlypos["baseline_similarity"] = df_onlypos["matching_score"]
-            df_onlypos["similarity"] = 1
-            df_onlypos["target"] = df_onlypos["matching_sentence"]
-            df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
-            df_onlypos.drop(columns=["matching_sentence","matching_score"], inplace=True)
-
+        df_onlypos["baseline_similarity"] = df_onlypos["matching_score"]
+        df_onlypos["similarity"] = 1
+        df_onlypos["target"] = df_onlypos["matching_sentence"]
+        df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
+        df_onlypos.drop(columns=["matching_sentence","matching_score"], inplace=True)
 
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
         pos_samples = df_train[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()
