@@ -248,7 +248,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
             df_train = getRanking(test_set=df_train, 
                                   knowledgebase=df_kb, 
                                   filter_column="module",
-                                  max_rank=10)
+                                  max_rank=5)
 
             df_train.drop(columns=["search_embd"], inplace=True)
             del df_kb
@@ -304,7 +304,6 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
         df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         df_onlypos.drop(columns=["matching_sentence","matching_score"], inplace=True)
 
-        #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()
         pos_samples = df_train[["search", "baseline_similarity", "matching_sentence", "all_scores_above"]].copy()
         neg_samples = df_train[["search", "all_sentences_above", "all_scores_above"]].copy()
 
