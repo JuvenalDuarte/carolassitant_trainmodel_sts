@@ -289,6 +289,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             df_train = df_train[df_train["target_ranking"] > 1]
             df_onlypos = df_train[df_train["target_ranking"] <= 1]
 
+            logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
             df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    
 
             df_onlypos["baseline_similarity"] = df_onlypos["matching_score"]
@@ -296,8 +297,6 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             df_onlypos["target"] = df_onlypos["matching_sentence"]
             df_onlypos.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
             df_onlypos.drop(columns=["matching_sentence","matching_score"], inplace=True)
-
-            logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
 
 
         #pos_samples = df_train[["search", "target", "baseline_similarity", "all_scores_above"]].copy()

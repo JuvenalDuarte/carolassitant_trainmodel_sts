@@ -28,7 +28,7 @@ class EvaluateResults(Task):
         bmodel = inputs[0]
         tmodel = inputs[1]
         train, validation = inputs[2]
-        train_baseline, acc_bas = inputs[4]
+        train_baseline, acc_bas = inputs[3]
 
         if len(validation):
             df_val = evaluate_models(baseline_name=self.baseline, target_app=self.app_to_publish, baseline_model=bmodel, tuned_model=tmodel, df_val=validation, df_kb=self.knowledgebase_file, acc_bas=self.acc_bas)

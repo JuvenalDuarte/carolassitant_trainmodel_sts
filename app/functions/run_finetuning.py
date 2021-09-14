@@ -145,8 +145,8 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretr
     logger.info(f'Fine tuning concluded.')
 
     #Saves the new trained model to the current dir.
-    saveto=baseline_name + "_FT" + str(datetime.now().strftime('%y%m%d%H%M%S'))
-    logger.info(f'Saving model to {saveto} on storage.')
-    save_object_to_storage(baseline_model, saveto)
+    #saveto=baseline_name + "_FT" + str(datetime.now().strftime('%y%m%d%H%M%S'))
+    #logger.info(f'Saving model to {saveto} on storage.')
+    #save_object_to_storage(baseline_model, saveto)
     
     return baseline_model
