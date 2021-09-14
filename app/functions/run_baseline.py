@@ -287,7 +287,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             # predicted the expected article will be used as positive examples to reinforce
             # and adjust attention heads.
             df_train = df_train[df_train["target_ranking"] > 1]
-            df_onlypos = df_train[df_train["target_ranking"] <= 1]
+            df_onlypos = df_train[df_train["target_ranking"] == 1]
 
             logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
             df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    
