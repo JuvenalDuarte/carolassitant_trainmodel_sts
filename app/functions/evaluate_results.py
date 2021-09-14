@@ -1,5 +1,4 @@
 import logging
-from sentence_transformers import util
 from ..functions.run_baseline import getEmbeddingsCache, calculateSimilarities, getRanking
 import torch
 from datetime import datetime
@@ -15,13 +14,9 @@ def save_model_to_onlineapp(obj, targetapp, filename):
     storage = Storage(login)
 
     logger.info(f'Saving {filename} to the app {targetapp}.')
-
-    with open(filename, "bw") as f:
-        pickle.dump(obj, f)
-
     storage.save(filename, obj, format='pickle')
 
-def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val, df_kb, acc_bas):
+def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_val, df_kb, acc_bas, ranking_threshold):
 
     logger.info(f'4. Evaluating performance.')
 
@@ -114,11 +109,11 @@ def evaluate_models(baseline_name, target_app, baseline_model, tuned_model, df_v
                                 max_rank=10)
 
         total_tests = df_val.shape[0]
-        finetuned_top1 = sum(df_val["target_ranking"] == 1)
+        finetuned_top1 = sum((df_val["target_ranking"] == 1) & (df_val["matching_score"] > ranking_threshold))
         finetuned_top1_percent = round((finetuned_top1/total_tests) * 100, 2)
         logger.info(f'Fine tuned accuracy for Top 1: {finetuned_top1} out of {total_tests} ({finetuned_top1_percent}).')
 
-        finetuned_top3 = sum(df_val["target_ranking"] <= 3)
+        finetuned_top3 = sum((df_val["target_ranking"] <= 3) & (df_val["matching_score"] > ranking_threshold))
         finetuned_top3_percent = round((finetuned_top3/total_tests) * 100, 2)
         logger.info(f'Fine tuned accuracy for Top 3: {finetuned_top3} out of {total_tests} ({finetuned_top3_percent}).')
 

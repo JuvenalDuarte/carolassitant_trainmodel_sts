@@ -55,6 +55,11 @@ knowledgebase_file = _settings.get('knowledgebase_file')
 # TODO.
 ranking_train_strategy = _settings.get('ranking_train_strategy')
 
+# The minimum score for the article to be considered relevant. If the similarity
+# is below this threshold it wil not be considered, even though it is the first
+# in the ranking.
+ranking_threshold = _settings.get('ranking_threshold')
+
 # TODO.
 selfsupervised_pretrain = _settings.get('selfsupervised_pretrain')
 
@@ -120,6 +125,7 @@ params = dict(
     validation_table = validation_table,
     knowledgebase_file = knowledgebase_file,
     ranking_train_strategy = ranking_train_strategy,
+    ranking_threshold = ranking_threshold,
     finetune_factor = finetune_factor,
     freezelayers = freezelayers,
     selfsupervised_pretrain = selfsupervised_pretrain,

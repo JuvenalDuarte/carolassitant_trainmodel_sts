@@ -20,6 +20,7 @@ class RunBaseline(Task):
     baseline = luigi.Parameter()
     reuse_ranking = luigi.Parameter()
     ranking_train_strategy = luigi.Parameter()
+    ranking_threshold = luigi.Parameter()
     knowledgebase_file = luigi.Parameter()
     
     #target_type = PickleTarget
@@ -34,6 +35,7 @@ class RunBaseline(Task):
                                df_train=train, 
                                df_kb=self.knowledgebase_file,
                                reuse_ranking=self.reuse_ranking,
-                               train_strat=self.ranking_train_strategy)
+                               train_strat=self.ranking_train_strategy,
+                               ranking_threshold = self.ranking_threshold)
 
         return base_df

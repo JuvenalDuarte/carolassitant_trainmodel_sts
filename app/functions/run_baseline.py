@@ -175,7 +175,9 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
         
     return df4
 
-def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat):
+def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat, ranking_threshold):
+    if ranking_threshold in [np.nan, None, ""]:
+        ranking_threshold = 0
 
     logger.info(f'2. Running baseline evaluation.')
 
@@ -258,26 +260,26 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             #stg.save("baseline_ranking", df_train, format='pickle', cache=False)
 
         total_tests = df_train.shape[0]
-        baseline_top1 = sum(df_train["target_ranking"] == 1)
+        baseline_top1 = sum((df_train["target_ranking"] == 1) & (df_train["matching_score"] > ranking_threshold))
         baseline_top1_percent = round((baseline_top1/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 1: {baseline_top1} out of {total_tests} ({baseline_top1_percent}).')
 
-        baseline_top3 = sum(df_train["target_ranking"] <= 3)
+        baseline_top3 = sum((df_train["target_ranking"] <= 3) & (df_train["matching_score"] > ranking_threshold))
         baseline_top3_percent = round((baseline_top3/total_tests) * 100, 2)
         logger.info(f'Baseline accuracy for Top 3: {baseline_top3} out of {total_tests} ({baseline_top3_percent}).')
 
 
         if train_strat.lower() == ">5":
-            logger.info('Fine tuning model on records ranked greater than 5.')
-            df_train = df_train[df_train["target_ranking"] > 5]
+            logger.info('Fine tuning model on records ranked greater than 5 or below threshold.')
+            df_train = df_train[(df_train["target_ranking"] > 5) | (df_train["matching_score"] < ranking_threshold)]
 
         elif train_strat.lower() == ">3":
-            logger.info('Fine tuning model on records ranked greater than 3.')
-            df_train = df_train[df_train["target_ranking"] > 3]
+            logger.info('Fine tuning model on records ranked greater than 3 or below threshold.')
+            df_train = df_train[(df_train["target_ranking"] > 3) | (df_train["matching_score"] < ranking_threshold)]
 
         elif train_strat.lower() == ">1":
-            logger.info('Fine tuning model on records ranked greater than 1.')
-            df_train = df_train[df_train["target_ranking"] > 1]
+            logger.info('Fine tuning model on records ranked greater than 1 or below threshold.')
+            df_train = df_train[(df_train["target_ranking"] > 1) | (df_train["matching_score"] < ranking_threshold)]
 
         else:
             train_strat = "all"
@@ -286,8 +288,8 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat)
             # This case is essentially equals to ">1", but records where the model correctly
             # predicted the expected article will be used as positive examples to reinforce
             # and adjust attention heads.
-            df_train = df_train[df_train["target_ranking"] > 1]
-            df_onlypos = df_train[df_train["target_ranking"] == 1]
+            df_onlypos = df_train[(df_train["target_ranking"] == 1) & (df_train["matching_score"] > ranking_threshold)]
+            df_train = df_train[(df_train["target_ranking"] > 1) | (df_train["matching_score"] < ranking_threshold)]
 
             logger.info(f'Total positive extracted from correctly predicted: {df_onlypos.shape[0]}.')
             df_onlypos = df_onlypos[["search", "baseline_similarity", "matching_sentence", "matching_score"]].copy()    

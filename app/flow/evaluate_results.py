@@ -21,6 +21,7 @@ class EvaluateResults(Task):
     app_to_publish = luigi.Parameter()
     publication_criteria = luigi.Parameter()
     knowledgebase_file = luigi.Parameter()
+    ranking_threshold = luigi.Parameter()
     datetime = luigi.Parameter() 
     baseline = luigi.Parameter() 
     
@@ -31,7 +32,14 @@ class EvaluateResults(Task):
         train_baseline, acc_bas = inputs[3]
 
         if len(validation):
-            df_val = evaluate_models(baseline_name=self.baseline, target_app=self.app_to_publish, baseline_model=bmodel, tuned_model=tmodel, df_val=validation, df_kb=self.knowledgebase_file, acc_bas=acc_bas)
+            df_val = evaluate_models(baseline_name=self.baseline, 
+                                     target_app=self.app_to_publish, 
+                                     baseline_model=bmodel, 
+                                     tuned_model=tmodel, 
+                                     df_val=validation, 
+                                     df_kb=self.knowledgebase_file, 
+                                     acc_bas=acc_bas, 
+                                     ranking_threshold=self.ranking_threshold)
         else:
             df_val = None
 
