@@ -319,8 +319,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
         pos_samples.drop(columns=["matching_sentence","all_scores_above", "highest_returned_score"], inplace=True)
 
-        if train_strat == "all":
-            pos_samples = pd.concat([pos_samples, df_onlypos], ignore_index=True)
+        pos_samples = pd.concat([pos_samples, df_onlypos], ignore_index=True)
 
         logger.info(f'Total positive samples: {pos_samples.shape[0]}.')
 
@@ -356,7 +355,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
     logger.info(f'Filtering inconsistent training samples.')
 
     # Filtering out same search-traget combinations with different expectations
-    df_train = df_train.groupby(["search", "target"])["similarity", "target_similarity"].max().reset_index()
+    df_train = df_train.groupby(["search", "target"])["similarity", "baseline_similarity"].max().reset_index()
 
     # Filtering out when search is exactly the same as target
     df_train = df_train[~(df_train["search"] == df_train["target"])]
