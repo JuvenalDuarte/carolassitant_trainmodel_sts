@@ -176,10 +176,12 @@ def getRanking(test_set, knowledgebase, filter_column = "module", max_rank=100):
     return df4
 
 def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat, ranking_threshold):
+    logger.info(f'2. Running baseline evaluation.')
+
     if ranking_threshold in [np.nan, None, ""]:
         ranking_threshold = -1
-
-    logger.info(f'2. Running baseline evaluation.')
+    else:
+        logger.info(f'Using {ranking_threshold} as reference threshold.')
 
     uniq_sentences = list(df_train["search"].unique())
     if not df_kb: uniq_sentences = uniq_sentences + list(df_train["target"].unique())
@@ -315,7 +317,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
         pos_samples["similarity"] = 1
         pos_samples["target"] = pos_samples["matching_sentence"]
         pos_samples.dropna(subset=["search", "target", "baseline_similarity", "similarity"], inplace=True)
-        pos_samples.drop(columns=["matching_sentence","all_scores_above"], inplace=True)
+        pos_samples.drop(columns=["matching_sentence","all_scores_above", "highest_returned_score"], inplace=True)
 
         if train_strat == "all":
             pos_samples = pd.concat([pos_samples, df_onlypos], ignore_index=True)
@@ -350,6 +352,16 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
 
         logger.info('Concatenating positive and negative samples.')
         df_train = pd.concat([pos_samples, neg_samples], ignore_index=True)
+
+    logger.info(f'Filtering inconsistent training samples.')
+
+    # Filtering out same search-traget combinations with different expectations
+    df_train = df_train.groupby(["search", "target"])["similarity", "target_similarity"].max().reset_index()
+
+    # Filtering out when search is exactly the same as target
+    df_train = df_train[~(df_train["search"] == df_train["target"])]
+
+    logger.info(f'Total training samples after cleaning: {df_train.shape[0]}.')
 
     logger.info(f'Baseline evaluation finished.')
     baseline_acc = {"top1":baseline_top1_percent, 
