@@ -45,7 +45,7 @@ def applyBump(row, bump):
     else:
         factor = 1 - bump
 
-    return row["baseline_similarity"] * factor
+    return max(row["baseline_similarity"] * factor, 1)
 
 # Transforms records into sample layout required for STS training
 def prepare_samples(df):
