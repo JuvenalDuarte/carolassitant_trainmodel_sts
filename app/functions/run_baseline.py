@@ -355,6 +355,7 @@ def run_baseline(model, model_name, df_train, df_kb, reuse_ranking, train_strat,
     logger.info(f'Filtering inconsistent training samples.')
 
     # Filtering out same search-traget combinations with different expectations
+    df_train["baseline_similarity"] = df_train["baseline_similarity"].astype(float)
     df_train = df_train.groupby(["search", "target"])[["similarity", "baseline_similarity"]].max()
     df_train = df_train.reset_index()
 
