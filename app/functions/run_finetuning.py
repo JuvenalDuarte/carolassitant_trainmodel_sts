@@ -48,17 +48,42 @@ def applyBump(row, bump):
     return min(row["baseline_similarity"] * factor, 1)
 
 # Transforms records into sample layout required for STS training
-def prepare_samples(df):
-    dft = df.astype({"search": "str",
-                    "target": "str",
-                    "target_similarity": "float"})
-    
-                                   
-    dft.dropna(subset=["search", "target", "target_similarity"], axis=0, how="any", inplace=True)
+def prepare_samples(df, loss_function):
+    if loss_function == "CosineSimilarityLoss":
+        dft = df.astype({"search": "str",
+                        "target": "str",
+                        "target_similarity": "float"})
 
-    pos_samples = []
-    for (a, t, s) in dft[["search", "target", "target_similarity"]].values:
-        pos_samples.append(InputExample(texts=[a, t], label=s))
+        dft.dropna(subset=["search", "target", "target_similarity"], axis=0, how="any", inplace=True)
+
+        pos_samples = []
+        for (a, t, s) in dft[["search", "target", "target_similarity"]].values:
+            pos_samples.append(InputExample(texts=[a, t], label=s))
+
+    elif loss_function == "MultipleNegativesRankingLoss":
+        # filtra apenas exemplos positivos
+        dft = df[df["similarity"] == 1]
+        dft = df.astype({"search": "str",
+                        "target": "str"})
+
+        dft.dropna(subset=["search", "target"], axis=0, how="any", inplace=True)
+
+        pos_samples = []
+        for (a, t) in dft[["search", "target"]].values:
+            pos_samples.append(InputExample(texts=[a, t]))
+
+    elif loss_function == "OnlineContrastiveLoss":
+        dft = df.astype({"search": "str",
+                        "target": "str",
+                        "similarity": "float"})
+
+        dft.dropna(subset=["search", "target", "similarity"], axis=0, how="any", inplace=True)
+
+        pos_samples = []
+        for (a, t, s) in dft[["search", "target", "similarity"]].values:
+            pos_samples.append(InputExample(texts=[a, t], label=s))
+    else:
+        raise(f"Unrecognized loss function: {loss_function}.")
 
     return pos_samples  
 
@@ -104,7 +129,7 @@ def unsupervised_pretrain_TSDAE(baselinemodel, model_name, sentence_list, epochs
 
     return baselinemodel
 
-def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretrain, epchs = 10, bsize = 90, freezelayers = -1):
+def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretrain, epchs = 10, bsize = 90, freezelayers = -1, loss_function="CosineSimilarityLoss"):
 
     logger.info(f'3. Running fine tuning.')
 
@@ -112,34 +137,47 @@ def run_finetuning(baseline_model, baseline_name, baseline_df, bump, unsup_pretr
         logger.info(f'Running unsupervised pretraining through TSDAE. Using search and target fields as input text.')
         pretraintext = list(baseline_df["search"].values) + list(baseline_df["target"].values)
         baseline_model = unsupervised_pretrain_TSDAE(baseline_model, baseline_name, pretraintext, epochs=epchs)
-    
-    logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
-    baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)
 
     logger.info(f'Saving training data for reference.')
     login = Carol()
     stg = Storage(login)
     stg.save("training_samples", baseline_df, format='pickle')
 
+    if freezelayers > 0:
+        logger.info(f'Freezing layers.')
+        freeze_layers(baseline_model, freeze_till=freezelayers)
+
+    logger.info(f'Preparing for {loss_function} loss.')
+    if loss_function == "CosineSimilarityLoss":
+        train_loss = losses.CosineSimilarityLoss(baseline_model)
+
+        logger.info(f'Setting target as the baseline similarity bumped on the right direction.')
+        baseline_df["target_similarity"] = baseline_df.apply(lambda x: applyBump(x, bump), axis=1)
+
+    elif loss_function == "MultipleNegativesRankingLoss":
+        train_loss = losses.MultipleNegativesRankingLoss(baseline_model)
+
+    elif loss_function == "OnlineContrastiveLoss":
+        train_loss = losses.OnlineContrastiveLoss(baseline_model)
+
+    else:
+        logger.error(f"Unrecognized loss function: {loss_function}. Make sure \"finetune_loss\" setting is filled with a valid loss function.")
+        raise(f"Unrecognized loss function: {loss_function}.")
+
     logger.info(f'Preparing the dataset.')
-    samples_df = prepare_samples(baseline_df)
+    samples_df = prepare_samples(baseline_df, loss_function)
 
     #Data is originally ordered. To avoid similar tickets to be grouped on the same batches, 
     #we shuffle the data on this step.
     logger.info(f'Shuffling training data.')
     random.shuffle(samples_df)
-
-    if freezelayers > 0:
-        logger.info(f'Freezing layers.')
-        freeze_layers(baseline_model, freeze_till=freezelayers)
-
+    
     logger.info(f'Preparing batches. Batch size={bsize}.')
     train_dataloader = DataLoader(samples_df, shuffle=True, batch_size=bsize)
 
     logger.info(f'Fine tuning the model. Epochs={epchs}.')
     warmup_steps = math.ceil(len(train_dataloader) * epchs * 0.1)
 
-    train_loss = losses.CosineSimilarityLoss(baseline_model)
     baseline_model.fit(train_objectives=[(train_dataloader, train_loss)], epochs=epchs, warmup_steps=warmup_steps)
 
     logger.info(f'Fine tuning concluded.')

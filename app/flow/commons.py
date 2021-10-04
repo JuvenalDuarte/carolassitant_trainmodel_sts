@@ -78,6 +78,9 @@ epochs = _settings.get('finetune_epochs')
 # but may lead to memory overflow.
 batchsize = _settings.get('finetune_batchsize')
 
+# TODO.
+loss_function = _settings.get('finetune_loss')
+
 # Will freeze the first N layers, as defined in this parameter.
 freezelayers = _settings.get('finetune_freezelayers')
 
@@ -127,6 +130,7 @@ params = dict(
     ranking_train_strategy = ranking_train_strategy,
     ranking_threshold = ranking_threshold,
     finetune_factor = finetune_factor,
+    loss_function = loss_function,
     freezelayers = freezelayers,
     selfsupervised_pretrain = selfsupervised_pretrain,
     app_to_publish = app_to_publish,
